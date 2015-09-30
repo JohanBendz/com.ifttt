@@ -1,0 +1,66 @@
+{
+  "id": "com.ifttt",
+  "version": "1.0.0",
+  "compatibility": ">=0.1.0",
+  "category": "internet",
+  "name": {
+    "en": "IFTTT",
+    "nl": "IFTTT"
+  },
+  "description": {
+    "en": "Connect your Homey to IFTTT using this app",
+    "nl": "Verbind je Homey met IFTTT door middel van deze app"
+  },
+  "author": {
+    "name": "Robin Bolscher",
+    "email": "robin@athom.nl"
+  },
+  "images": {
+    "small": "assets/images/small.png",
+    "large": "assets/images/large.png"
+  },
+  "permissions": [
+  ],
+  "speech": [
+  ],
+  "flow": {
+    "triggers": [
+      {
+        "id": "ifttt_event",
+        "title": {
+          "en": "On IFTTT event",
+          "nl": "Als IFTTT triggered"
+        },
+        "args": [
+          {
+            "name": "event",
+            "type": "text",
+            "placeholder": {
+              "en": "Event name",
+              "nl": "Event naam"
+            }
+          }
+        ]
+      }
+    ],
+    "actions": [
+      {
+        "id": "trigger_ifttt",
+        "title": {
+          "en": "Trigger IFTTT event",
+          "nl": "Trigger IFTTT actie"
+        },
+        "args": [
+          {
+            "name": "event",
+            "type": "text",
+            "placeholder": {
+              "en": "Event name",
+              "nl": "Event naam"
+            }
+          }
+        ]
+      }
+    ]
+  }
+}

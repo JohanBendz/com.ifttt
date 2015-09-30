@@ -1,0 +1,114 @@
+<!doctype html>
+<html>
+<head>
+</head>
+<body>
+
+<h1 data-i18n="settings.title"></h1>
+
+<p data-i18n="settings.webhook_intro"></p>
+
+<fieldset>
+    <legend>Webhook settings</legend>
+
+    <div class="field row">
+        <label for="url">URL</label>
+        <input id="url" type="text" value=""/>
+    </div>
+    <div class="field row">
+        <label for="id">ID</label>
+        <input id="id" type="text" value=""/>
+    </div>
+    <div class="field row">
+        <label for="secret">Secret</label>
+        <input id="secret" type="text" value=""/>
+    </div>
+
+</fieldset>
+
+<p data-i18n="settings.ifttt_intro"></p>
+
+<fieldset>
+    <legend>IFTTT settings</legend>
+
+    <div class="field row">
+        <label for="key">IFTTT key</label>
+        <input id="key" type="text" value=""/>
+    </div>
+
+</fieldset>
+
+<button id="save" class="right" data-i18n="settings.save" onclick="saveSettings()"></button>
+
+<script type="text/javascript">
+
+    // Initialize Homey
+    function onHomeyReady () {
+        Homey.ready();
+
+        // Fill input with already stored settings
+        if ( Homey.settings.url ) {
+            document.getElementById( 'url' ).value = Homey.settings.url;
+        }
+        if ( Homey.settings.id ) {
+            document.getElementById( 'id' ).value = Homey.settings.id;
+        }
+        if ( Homey.settings.secret ) {
+            document.getElementById( 'secret' ).value = Homey.settings.secret;
+        }
+        if ( Homey.settings.key ) {
+            document.getElementById( 'key' ).value = Homey.settings.key;
+        }
+    }
+
+    // Save updated settings
+    function saveSettings () {
+
+        // Update app with new settings
+        Homey.api( 'PUT', '/settings/', {
+            "url": document.getElementById( 'url' ).value,
+            "id": document.getElementById( 'id' ).value,
+            "secret": document.getElementById( 'secret' ).value,
+            "key": document.getElementById( 'key' ).value
+        }, function ( err, success ) {
+
+            if ( success ) {
+                // Display successful registration
+                document.getElementById( 'save' ).style[ 'background-color' ] = 'lightgreen';
+                document.getElementById( 'save' ).style[ 'color' ] = 'white';
+                document.getElementById( 'save' ).innerHTML = __( "settings.saved" );
+
+                // Store settings for the long term
+                Homey.settings.url = document.getElementById( 'url' ).value;
+                Homey.settings.id = document.getElementById( 'id' ).value;
+                Homey.settings.secret = document.getElementById( 'secret' ).value;
+                Homey.settings.key = document.getElementById( 'key' ).value;
+
+                setTimeout( function () {
+                    // Reset button
+                    document.getElementById( 'save' ).style[ 'background-color' ] = '';
+                    document.getElementById( 'save' ).style[ 'color' ] = 'black';
+                    document.getElementById( 'save' ).innerHTML = __( "settings.save" );
+                }, 3000 );
+
+            }
+            else {
+
+                // Display failed registration
+                document.getElementById( 'save' ).style[ 'background-color' ] = 'lightcoral';
+                document.getElementById( 'save' ).style[ 'color' ] = 'black';
+                document.getElementById( 'save' ).innerHTML = __( "settings.not_saved" );
+
+                setTimeout( function () {
+                    // Reset button
+                    document.getElementById( 'save' ).style[ 'background-color' ] = '';
+                    document.getElementById( 'save' ).style[ 'color' ] = 'black';
+                    document.getElementById( 'save' ).innerHTML = __( "settings.save" );
+                }, 3000 );
+            }
+        } );
+    }
+</script>
+
+</body>
+</html>
