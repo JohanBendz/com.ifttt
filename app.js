@@ -6,7 +6,7 @@ var triggeredEvent;
 var self = module.exports = {
     init: function () {
         // On triggered flow
-        Homey.manager('flow').on('trigger.ifttt_event', function( args, callback ){
+        Homey.manager('flow').on('trigger.ifttt_event', function( callback, args ){
 
             // Check if event triggerd is equal to event send in flow card
             if(args.event === triggeredEvent){
@@ -17,24 +17,24 @@ var self = module.exports = {
         });
 
         // Register initial webhook
-        if ( Homey.settings.url && Homey.settings.id && Homey.settings.secret ) {
+        if ( Homey.manager("settings").get("url") && Homey.manager("settings").get("id") && Homey.manager("settings").get("secret") ) {
 
             // Register webhook
-            self.registerWebhook( Homey.settings );
+            self.registerWebhook( Homey.manager("settings").get("id"), Homey.manager("settings").get("secret") );
 
             // Listen for flow triggers
-            self.listenForTriggers( Homey.settings );
+            self.listenForTriggers( Homey.manager("settings").get("key") );
         }
     },
     updateSettings: function ( settings, callback ) {
 
         // Register new webhook
-        self.registerWebhook( settings, callback );
+        self.registerWebhook( settings.id, settings.secret, callback );
     },
-    registerWebhook: function ( settings, callback ) {
+    registerWebhook: function ( id, secret, callback ) {
 
         // Register webhook
-        Homey.manager( 'cloud' ).registerWebhook( settings.id, settings.secret, {}, self.incomingWebhook,
+        Homey.manager( 'cloud' ).registerWebhook( id, secret, {}, self.incomingWebhook,
             function ( err, result ) {
                 if ( err || !result ) {
 
@@ -43,7 +43,7 @@ var self = module.exports = {
                 }
                 else {
                     // Unregister old webhook
-                    if ( webhookID && webhookID !== settings.id ) Homey.manager( 'cloud' ).unregisterWebhook( webhookID );
+                    if ( webhookID && webhookID !== id ) Homey.manager( 'cloud' ).unregisterWebhook( webhookID );
 
                     // Return success
                     if ( callback )callback( null, true );
@@ -51,7 +51,7 @@ var self = module.exports = {
             } );
 
         // Store used webhook internally
-        webhookID = settings.id;
+        webhookID = id;
     },
     incomingWebhook: function ( args ) {
 
@@ -61,11 +61,11 @@ var self = module.exports = {
         // Store triggered event
         triggeredEvent = args.body.event;
     },
-    listenForTriggers: function ( settings ) {
+    listenForTriggers: function ( key ) {
 
         // On triggered flow
-        Homey.manager('flow').on('action.trigger_ifttt', function( args, callback ){
-            var url = 'https://maker.ifttt.com/trigger/' + args.event + '/with/key/' + settings.key;
+        Homey.manager('flow').on('action.trigger_ifttt', function( callback, args ){
+            var url = 'https://maker.ifttt.com/trigger/' + args.event + '/with/key/' + key;
             request.post(
                 url,
                 {},

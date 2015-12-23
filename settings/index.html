@@ -47,18 +47,26 @@
         Homey.ready();
 
         // Fill input with already stored settings
-        if ( Homey.settings.url ) {
-            document.getElementById( 'url' ).value = Homey.settings.url;
-        }
-        if ( Homey.settings.id ) {
-            document.getElementById( 'id' ).value = Homey.settings.id;
-        }
-        if ( Homey.settings.secret ) {
-            document.getElementById( 'secret' ).value = Homey.settings.secret;
-        }
-        if ( Homey.settings.key ) {
-            document.getElementById( 'key' ).value = Homey.settings.key;
-        }
+        Homey.get("url", function (err, value) {
+            if ( value ) {
+                document.getElementById( 'url' ).value = value;
+            }
+        });
+        Homey.get("id", function (err, value) {
+            if ( value ) {
+                document.getElementById( 'id' ).value = value;
+            }
+        });
+        Homey.get("secret", function (err, value) {
+            if ( value ) {
+                document.getElementById( 'secret' ).value = value;
+            }
+        });
+        Homey.get("key", function (err, value) {
+            if ( value ) {
+                document.getElementById( 'key' ).value = value;
+            }
+        });
     }
 
     // Save updated settings
@@ -79,10 +87,10 @@
                 document.getElementById( 'save' ).innerHTML = __( "settings.saved" );
 
                 // Store settings for the long term
-                Homey.settings.url = document.getElementById( 'url' ).value;
-                Homey.settings.id = document.getElementById( 'id' ).value;
-                Homey.settings.secret = document.getElementById( 'secret' ).value;
-                Homey.settings.key = document.getElementById( 'key' ).value;
+                Homey.set("url", document.getElementById( 'url' ).value);
+                Homey.set("id", document.getElementById( 'id' ).value);
+                Homey.set("secret", document.getElementById( 'secret' ).value);
+                Homey.set("key", document.getElementById( 'key' ).value);
 
                 setTimeout( function () {
                     // Reset button
