@@ -30,6 +30,9 @@ var self = module.exports = {
 
         // Register new webhook
         self.registerWebhook( settings.id, settings.secret, callback );
+
+		// Listen for flow triggers
+		self.listenForTriggers( settings.key );
     },
     registerWebhook: function ( id, secret, callback ) {
 
@@ -39,7 +42,7 @@ var self = module.exports = {
                 if ( err || !result ) {
 
                     // Return failure
-                    if ( callback )callback( null, false );
+                    if ( callback )callback( true, null );
                 }
                 else {
                     // Unregister old webhook
@@ -54,7 +57,6 @@ var self = module.exports = {
         webhookID = id;
     },
     incomingWebhook: function ( args ) {
-
         // Trigger event
         Homey.manager('flow').trigger('ifttt_event');
 
@@ -71,7 +73,7 @@ var self = module.exports = {
                 {},
                 function (error, response, body) {
                     if (!error && response.statusCode == 200) {
-                        callback( true ); // we've fired successfully
+                        callback( null, true ); // we've fired successfully
                     }
                 }
             );
