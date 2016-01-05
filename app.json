@@ -12,8 +12,7 @@
     "nl": "Verbind je Homey met IFTTT door middel van deze app"
   },
   "author": {
-    "name": "Athom B.V.",
-    "email": "info@athom.com"
+    "name": "Athom B.V."
   },
   "images": {
     "small": "assets/images/small.png",
