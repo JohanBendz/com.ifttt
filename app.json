@@ -1,7 +1,7 @@
 {
   "id": "com.ifttt",
-  "version": "1.0.1",
-  "compatibility": ">=0.1.0",
+  "version": "1.0.2",
+  "compatibility": ">=0.0.0",
   "category": "internet",
   "name": {
     "en": "IFTTT",
