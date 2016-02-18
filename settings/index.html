@@ -43,78 +43,80 @@
 <script type="text/javascript">
 
     // Initialize Homey
-    function onHomeyReady () {
+    function onHomeyReady() {
         Homey.ready();
 
         // Fill input with already stored settings
         Homey.get("url", function (err, value) {
-            if ( value ) {
-                document.getElementById( 'url' ).value = value;
+            if (value) {
+                document.getElementById('url').value = value;
             }
         });
         Homey.get("id", function (err, value) {
-            if ( value ) {
-                document.getElementById( 'id' ).value = value;
+            if (value) {
+                document.getElementById('id').value = value;
             }
         });
         Homey.get("secret", function (err, value) {
-            if ( value ) {
-                document.getElementById( 'secret' ).value = value;
+            if (value) {
+                document.getElementById('secret').value = value;
             }
         });
         Homey.get("key", function (err, value) {
-            if ( value ) {
-                document.getElementById( 'key' ).value = value;
+            if (value) {
+                document.getElementById('key').value = value;
             }
         });
     }
 
     // Save updated settings
-    function saveSettings () {
+    function saveSettings() {
 
-        // Update app with new settings
-        Homey.api( 'PUT', '/settings/', {
-            "url": document.getElementById( 'url' ).value,
-            "id": document.getElementById( 'id' ).value,
-            "secret": document.getElementById( 'secret' ).value,
-            "key": document.getElementById( 'key' ).value
-        }, function ( err, success ) {
-
-            if ( success ) {
-                // Display successful registration
-                document.getElementById( 'save' ).style[ 'background-color' ] = 'lightgreen';
-                document.getElementById( 'save' ).style[ 'color' ] = 'white';
-                document.getElementById( 'save' ).innerHTML = __( "settings.saved" );
-
-                // Store settings for the long term
-                Homey.set("url", document.getElementById( 'url' ).value);
-                Homey.set("id", document.getElementById( 'id' ).value);
-                Homey.set("secret", document.getElementById( 'secret' ).value);
-                Homey.set("key", document.getElementById( 'key' ).value);
-
-                setTimeout( function () {
-                    // Reset button
-                    document.getElementById( 'save' ).style[ 'background-color' ] = '';
-                    document.getElementById( 'save' ).style[ 'color' ] = 'black';
-                    document.getElementById( 'save' ).innerHTML = __( "settings.save" );
-                }, 3000 );
-
-            }
-            else {
-
+        // Store settings for the long term
+        Homey.set("url", document.getElementById('url').value, function (err) {
+            if (err) {
                 // Display failed registration
-                document.getElementById( 'save' ).style[ 'background-color' ] = 'lightcoral';
-                document.getElementById( 'save' ).style[ 'color' ] = 'black';
-                document.getElementById( 'save' ).innerHTML = __( "settings.not_saved" );
-
-                setTimeout( function () {
-                    // Reset button
-                    document.getElementById( 'save' ).style[ 'background-color' ] = '';
-                    document.getElementById( 'save' ).style[ 'color' ] = 'black';
-                    document.getElementById( 'save' ).innerHTML = __( "settings.save" );
-                }, 3000 );
+                document.getElementById('save').style['background-color'] = 'lightcoral';
+                document.getElementById('save').style['color'] = 'black';
+                document.getElementById('save').innerHTML = __("settings.not_saved");
             }
-        } );
+        });
+        Homey.set("id", document.getElementById('id').value, function (err) {
+            if (err) {
+                // Display failed registration
+                document.getElementById('save').style['background-color'] = 'lightcoral';
+                document.getElementById('save').style['color'] = 'black';
+                document.getElementById('save').innerHTML = __("settings.not_saved");
+            }
+        });
+        Homey.set("secret", document.getElementById('secret').value, function (err) {
+            if (err) {
+                // Display failed registration
+                document.getElementById('save').style['background-color'] = 'lightcoral';
+                document.getElementById('save').style['color'] = 'black';
+                document.getElementById('save').innerHTML = __("settings.not_saved");
+            }
+        });
+        Homey.set("key", document.getElementById('key').value, function (err) {
+            if (err) {
+                // Display failed registration
+                document.getElementById('save').style['background-color'] = 'lightcoral';
+                document.getElementById('save').style['color'] = 'black';
+                document.getElementById('save').innerHTML = __("settings.not_saved");
+            }
+        });
+
+        // Display successful registration
+        document.getElementById('save').style['background-color'] = 'lightgreen';
+        document.getElementById('save').style['color'] = 'white';
+        document.getElementById('save').innerHTML = __("settings.saved");
+
+        setTimeout(function () {
+            // Reset button
+            document.getElementById('save').style['background-color'] = '';
+            document.getElementById('save').style['color'] = 'black';
+            document.getElementById('save').innerHTML = __("settings.save");
+        }, 3000);
     }
 </script>
 
