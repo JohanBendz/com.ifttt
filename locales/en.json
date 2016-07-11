@@ -1,10 +1,3 @@
 {
-  "settings": {
-    "title": "IFTTT Settings",
-    "webhook_intro": "For IFTTT to work with Homey, you have to register a <a target='_blank' href='http://developers.athom.com/webhooks/'>webhook</a> first. Copy and paste the Webhook URL, ID and Secret into the fields below. You can use the Webhook URL in your IFTTT recipes to trigger events on Homey! <br><br><strong>Make sure that all your recipes that will trigger a flow on Homey have a json encoded body with the following properties: {\"event\":\"your_event_name_here\"}",
-    "ifttt_intro": "Besides that, fill in your IFTTT key below. If you don't have a key yet, please register your <a target='_blank' href='https://ifttt.com/maker'>IFTTT Maker Channel</a>.",
-    "save": "Save",
-    "saved": "Webhook registerd",
-    "not_saved": "Webhook invalid"
-  }
+
 }

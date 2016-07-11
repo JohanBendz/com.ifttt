@@ -1,93 +1,51 @@
-"use strict";
-var request = require('request');
-var webhookID;
-var triggeredEvent;
+'use strict';
 
-var self = module.exports = {
-	init: function () {
+const request = require('request');
 
-		// On triggered flow
-		Homey.manager('flow').on('trigger.ifttt_event', function (callback, args) {
+module.exports.init = () => {
 
-			// Check if event triggerd is equal to event send in flow card
-			if (args.event === triggeredEvent) {
-				callback(null, true);
-			}
-			else {
-				callback(true, null);
-			}
-		});
+	// On triggered ifttt_event
+	Homey.manager('flow').on('trigger.ifttt_event', (callback, args, state) => {
 
-		// Register initial webhook
-		if (Homey.manager("settings").get("url") && Homey.manager("settings").get("id") && Homey.manager("settings").get("secret")) {
+		console.log('IFTTT: on(trigger.ifttt_event)');
 
-			// Register webhook
-			self.registerWebhook(Homey.manager("settings").get("id"), Homey.manager("settings").get("secret"));
+		// Check for valid input
+		if (args && args.hasOwnProperty('event')) {
 
-			// Listen for flow triggers
-			self.listenForTriggers(Homey.manager("settings").get("key"));
+			console.log(`IFTTT: continue with flow ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
+
+			// Return success true if events match
+			callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
+		} else {
+
+			// Return error callback
+			callback(true, false);
 		}
+	});
 
-		// Listen for settings change
-		var counter = 0;
-		Homey.manager('settings').on('set', function () {
-			counter++;
-			if (counter == 4) {
-				// Register new webhook
-				self.registerWebhook(Homey.manager("settings").get('id'), Homey.manager("settings").get('secret'));
+	// On action trigger_ifttt
+	Homey.manager('flow').on('action.trigger_ifttt', (callback, args) => {
 
-				// Listen for flow triggers
-				self.listenForTriggers(Homey.manager("settings").get('key'));
+		console.log('IFTTT: on(action.trigger_ifttt)');
 
-				// Reset counter
-				counter = 0;
+		// TODO authentication
+		request.post({
+			url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/a_flow_action_is_triggered',
+			json: {
+				eventName: args.event
+			},
+			headers: {
+				Authorization: 'Bearer d423b7b4fefc6d3a5a2b49f5f8d0f0396ae0c0e7e4454b36b2' +
+				'2daaa3ae2c7698b91ed042ce09cd939e66c6d065c7cc6e'
+			}
+		}, (error, response, body) => {
+			if (!error && response.statusCode === 200) {
+				console.log('IFTTT: succeeded to trigger Realtime API');
+				callback(null, true);
+			} else {
+				console.log('IFTTT: failed to trigger Realtime API');
+				callback(true, false);
 			}
 		});
-	},
-	registerWebhook: function (id, secret, callback) {
-
-		// Register webhook
-		Homey.manager('cloud').registerWebhook(id, secret, {}, self.incomingWebhook,
-			function (err, result) {
-				if (err || !result) {
-
-					// Return failure
-					if (callback)callback(true, null);
-				}
-				else {
-					// Unregister old webhook
-					if (webhookID && webhookID !== id) Homey.manager('cloud').unregisterWebhook(webhookID);
-
-					// Return success
-					if (callback)callback(null, true);
-				}
-			});
-
-		// Store used webhook internally
-		webhookID = id;
-	},
-	incomingWebhook: function (args) {
-
-		// Store triggered event
-		triggeredEvent = args.body.event;
-
-		// Trigger event
-		Homey.manager('flow').trigger('ifttt_event');
-	},
-	listenForTriggers: function (key) {
-
-		// On triggered flow
-		Homey.manager('flow').on('action.trigger_ifttt', function (callback, args) {
-			var url = 'https://maker.ifttt.com/trigger/' + args.event + '/with/key/' + key;
-			request.post(
-				url,
-				{},
-				function (error, response, body) {
-					if (!error && response.statusCode == 200) {
-						callback(null, true); // we've fired successfully
-					}
-				}
-			);
-		});
-	}
+	});
 };

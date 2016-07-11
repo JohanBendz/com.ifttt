@@ -1,15 +1,15 @@
 {
   "id": "com.ifttt",
-  "version": "1.0.3",
-  "compatibility": ">=0.0.0",
+  "version": "2.0.0",
+  "compatibility": ">=0.8.30",
   "category": "internet",
   "name": {
     "en": "IFTTT",
     "nl": "IFTTT"
   },
   "description": {
-    "en": "Connect your Homey to IFTTT using this app",
-    "nl": "Verbind je Homey met IFTTT door middel van deze app"
+    "en": "Connect your Homey to IFTTT",
+    "nl": "Verbind je Homey met IFTTT"
   },
   "author": {
     "name": "Athom B.V."
@@ -19,6 +19,7 @@
     "large": "assets/images/large.png"
   },
   "permissions": [
+    "homey:manager:speech-output"
   ],
   "speech": [
   ],
