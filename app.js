@@ -4,6 +4,19 @@ const request = require('request');
 
 module.exports.init = () => {
 
+	let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+
+	// Listen for a setting save
+	Homey.manager('settings').on('set', (settingName) => {
+
+		// If value saved is homeyCloudID
+		if (settingName === 'homeyCloudID') {
+
+			// Save it internally
+			homeyCloudID = Homey.manager('settings').get(settingName);
+		}
+	});
+
 	// On triggered ifttt_event
 	Homey.manager('flow').on('trigger.ifttt_event', (callback, args, state) => {
 
@@ -28,24 +41,100 @@ module.exports.init = () => {
 
 		console.log('IFTTT: on(action.trigger_ifttt)');
 
-		// TODO authentication
-		request.post({
-			url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/a_flow_action_is_triggered',
-			json: {
-				eventName: args.event
-			},
-			headers: {
-				Authorization: 'Bearer d423b7b4fefc6d3a5a2b49f5f8d0f0396ae0c0e7e4454b36b2' +
-				'2daaa3ae2c7698b91ed042ce09cd939e66c6d065c7cc6e'
-			}
-		}, (error, response, body) => {
-			if (!error && response.statusCode === 200) {
-				console.log('IFTTT: succeeded to trigger Realtime API');
+		// Make a call to register trigger with ifttt.athom.com
+		registerFlowActionTrigger(args, homeyCloudID, err => {
+			if (err) {
+
+				console.log('Refresh tokens');
+
+				refreshTokens(() => {
+
+					console.log('Retry...');
+
+					// Retry registering action trigger
+					registerFlowActionTrigger(args, homeyCloudID, (err, success) => {
+						callback(err, success);
+					});
+				});
+			} else if (callback) {
 				callback(null, true);
-			} else {
-				console.log('IFTTT: failed to trigger Realtime API');
-				callback(true, false);
 			}
 		});
 	});
 };
+
+/**
+ * Makes a call to ifttt.athom.com to register a
+ * flow action trigger event.
+ * @param eventName
+ * @param homeyCloudID
+ * @param callback
+ */
+function registerFlowActionTrigger(args, homeyCloudID, callback) {
+
+	console.log(`Register flow action trigger, event name: ${args.event}, 
+	homey cloud id: ${homeyCloudID}, data: ${args.data}`);
+
+	request.post({
+		url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/a_flow_action_is_triggered',
+		json: {
+			flowID: args.event,
+			homeyCloudID: homeyCloudID,
+			data: args.data
+		},
+		headers: {
+			Authorization: `Bearer ${Homey.manager('settings').get('ifttt_access_token')}`
+		}
+	}, (error, response) => {
+		if (!error && response.statusCode === 200) {
+			console.log('IFTTT: succeeded to trigger Realtime API');
+			if (callback) callback(null, true);
+		} else {
+			console.error(error || response.statusCode !== 200, 'IFTTT: failed to trigger Realtime API');
+			if (callback) callback(true, false);
+		}
+	});
+}
+
+/**
+ * Tries to refresh the stored access and refresh tokens.
+ * @param callback
+ */
+function refreshTokens(callback) {
+
+	// Make request to api to fetch access_token
+	request.post({
+		url: 'https://ifttt.athom.com/oauth2/token',
+		form: {
+			client_id: Homey.env.CLIENT_ID,
+			client_secret: Homey.env.CLIENT_SECRET,
+			grant_type: 'refresh_token',
+			refresh_token: Homey.manager('settings').get('ifttt_refresh_token')
+		}
+	}, (err, response, body) => {
+		if (err) {
+
+			console.error(err, 'Error fetching new tokens');
+
+			if (callback) callback(true, false);
+		} else {
+
+			console.log('Stored new tokens');
+
+			if (!err && body) {
+				let parsedResult;
+				try {
+					parsedResult = JSON.parse(body);
+
+					// Store new access tokens
+					Homey.manager('settings').set('ifttt_access_token', parsedResult.access_token);
+					Homey.manager('settings').set('ifttt_refresh_token', parsedResult.refresh_token);
+
+					if (callback) callback(null, true);
+				} catch (err) {
+					if (callback) callback(true, false);
+				}
+			} else if (callback) callback(true, false);
+		}
+	});
+}

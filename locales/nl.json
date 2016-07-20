@@ -1,3 +1,9 @@
 {
-
+	"settings": {
+		"title": "IFTTT Instellingen",
+		"intro": "Klik op de knop hieronder om Homey te laten samenwerken met IFTTT.",
+		"authorize": "Verbind met IFTTT",
+		"revoke": "Verbreek verbinding met IFTTT",
+		"authorize_error": "Er ging iets fout, probeer het opnieuw."
+	}
 }

@@ -1,3 +1,9 @@
 {
-
+	"settings":{
+		"title": "IFTTT Settings",
+		"intro": "To let Homey interact with IFTTT please authorize Homey to send basic information on Flow Actions and Triggers to IFTTT.",
+		"authorize": "Connect to IFTTT",
+		"revoke": "Disconnect IFTTT",
+		"authorize_error": "Something went wrong, please try again."
+	}
 }
