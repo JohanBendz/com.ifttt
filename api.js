@@ -68,6 +68,18 @@ module.exports = [
 		}
 	},
 	{
+		description: 'getTriggers',
+		method: 'GET',
+		path: '/getTriggers',
+		fn: (callback) => {
+
+			console.log('IFTTT app API: incoming /getTriggers');
+			console.log('IFTTT app API: returning', Homey.app.registeredTriggers);
+
+			callback(null, Homey.app.registeredTriggers || []);
+		}
+	},
+	{
 		description: 'letHomeySpeak',
 		method: 'POST',
 		path: '/actions/letHomeySpeak',

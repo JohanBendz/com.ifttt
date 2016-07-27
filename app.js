@@ -2,9 +2,59 @@
 
 const request = require('request');
 
+const registeredTriggers = module.exports.registeredTriggers = [];
+
 module.exports.init = () => {
 
 	let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+
+	// Fetch all registered triggers
+	Homey.manager('flow').getTriggerArgs('ifttt_event', (err, triggers) => {
+		if (!err && triggers) {
+
+			// Loop over triggers
+			triggers.forEach(trigger => {
+
+				// Check if all args are valid and present
+				if (trigger && trigger.hasOwnProperty('event') && registeredTriggers.indexOf(trigger.event) === -1) {
+
+					// Register trigger
+					registeredTriggers.push(trigger.event);
+				}
+			});
+		}
+	});
+
+	// Listen for triggers being added
+	Homey.manager('flow').on('trigger.ifttt_event.added', (callback, newArgs) => {
+
+		// Check if all values provided and if trigger is not already registered
+		if (newArgs && newArgs.hasOwnProperty('event') && registeredTriggers.indexOf(newArgs.event) === -1) {
+
+			// Register trigger
+			registeredTriggers.push(newArgs.event);
+		}
+
+		callback(null, true);
+	});
+
+	// Listen for triggers being removed
+	Homey.manager('flow').on('trigger.ifttt_event.removed', (callback, oldArgs) => {
+
+		// Check if all values provided
+		if (oldArgs && oldArgs.hasOwnProperty('event')) {
+			const i = registeredTriggers.indexOf(oldArgs.event);
+
+			// Check if trigger is registered
+			if (i !== -1) {
+
+				// Remove trigger from list
+				registeredTriggers.splice(i, 1);
+			}
+		}
+
+		callback(null, true);
+	});
 
 	// Listen for a setting save
 	Homey.manager('settings').on('set', (settingName) => {
