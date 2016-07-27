@@ -6,7 +6,12 @@ const registeredTriggers = module.exports.registeredTriggers = [];
 
 module.exports.init = () => {
 
-	let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+	let homeyCloudID;
+
+	// Fetch homey id
+	Homey.manager('cloud').getHomeyId((err, homeyId) => {
+		if (!err && homeyId) homeyCloudID = homeyId;
+	});
 
 	// Fetch all registered triggers
 	Homey.manager('flow').getTriggerArgs('ifttt_event', (err, triggers) => {
@@ -54,17 +59,6 @@ module.exports.init = () => {
 		}
 
 		callback(null, true);
-	});
-
-	// Listen for a setting save
-	Homey.manager('settings').on('set', (settingName) => {
-
-		// If value saved is homeyCloudID
-		if (settingName === 'homeyCloudID') {
-
-			// Save it internally
-			homeyCloudID = Homey.manager('settings').get(settingName);
-		}
 	});
 
 	// On triggered ifttt_event
