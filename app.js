@@ -2,119 +2,150 @@
 
 const request = require('request');
 
-const registeredTriggers = module.exports.registeredTriggers = [];
+let homeyCloudID;
 
+/**
+ * Fetch homeyCloudId and registered triggers
+ * and actions. Start listening for flow events.
+ */
 module.exports.init = () => {
 
-	let homeyCloudID;
-
-	// Fetch homey id
+	// Fetch homey cloud id
 	Homey.manager('cloud').getHomeyId((err, homeyId) => {
-		if (!err && homeyId) homeyCloudID = homeyId;
+		if (!err && homeyId) {
+
+			// Save homey cloud id
+			homeyCloudID = homeyId;
+
+			// Fetch actions and triggers already registered
+			registerTriggers();
+			registerActions();
+
+			// Listen for flow card updates and actions/triggers
+			Homey.manager('flow').on('trigger.ifttt_event.update', registerTriggers);
+			Homey.manager('flow').on('action.trigger_ifttt.update', registerActions);
+			Homey.manager('flow').on('trigger.ifttt_event', triggerHandler);
+			Homey.manager('flow').on('action.trigger_ifttt', actionHandler);
+		}
 	});
+};
+
+/**
+ * Incoming flow action event, register
+ * it with IFTTT as an action trigger.
+ * @param callback
+ * @param args
+ */
+function actionHandler(callback, args) {
+
+	console.log('Register flow action trigger with args: ', args);
+
+	// Make a call to register trigger with ifttt.athom.com
+	registerFlowActionTrigger(args, err => {
+		if (err) {
+
+			console.error('Error registering flow action trigger, trying to refresh tokens', err);
+
+			// Refresh access tokens
+			refreshTokens(() => {
+
+				console.log('Register flow action trigger with args: ', args);
+
+				// Retry registering action trigger
+				registerFlowActionTrigger(args, (err, success) => {
+					if (err) console.error('Error registering flow action trigger, abort', err);
+					callback(err, success);
+				});
+			});
+		} else if (callback) {
+			callback(null, true);
+		}
+	});
+}
+
+/**
+ * Handle flow trigger parsing, check
+ * if events match and are valid.
+ * @param callback
+ * @param args
+ * @param state
+ */
+function triggerHandler(callback, args, state) {
+
+	console.log('Parse incoming trigger with args: ', args);
+	// Check for valid input
+	if (args && args.hasOwnProperty('event')) {
+
+		console.log(`IFTTT: continue with flow ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
+
+		// Return success true if events match
+		callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
+	} else {
+
+		// Return error callback
+		callback(true, false);
+	}
+}
+
+/**
+ * Register all action flow cards
+ * that are saved.
+ */
+function registerActions() {
+
+	// Fetch all registered triggers
+	Homey.manager('flow').getActionArgs('trigger_ifttt', (err, actions) => {
+		if (!err && actions) {
+
+			module.exports.registeredActions = [];
+
+			// Loop over triggers
+			actions.forEach(action => {
+
+				// Check if all args are valid and present
+				if (action && action.hasOwnProperty('event')) {
+
+					// Register action
+					module.exports.registeredActions.push(action.event);
+				}
+			});
+		}
+	});
+}
+
+/**
+ * Register all trigger flow cards
+ * that are saved.
+ */
+function registerTriggers() {
 
 	// Fetch all registered triggers
 	Homey.manager('flow').getTriggerArgs('ifttt_event', (err, triggers) => {
 		if (!err && triggers) {
 
+			module.exports.registeredTriggers = [];
+
 			// Loop over triggers
 			triggers.forEach(trigger => {
 
 				// Check if all args are valid and present
-				if (trigger && trigger.hasOwnProperty('event') && registeredTriggers.indexOf(trigger.event) === -1) {
+				if (trigger && trigger.hasOwnProperty('event')) {
 
 					// Register trigger
-					registeredTriggers.push(trigger.event);
+					module.exports.registeredTriggers.push(trigger.event);
 				}
 			});
 		}
 	});
-
-	// Listen for triggers being added
-	Homey.manager('flow').on('trigger.ifttt_event.added', (callback, newArgs) => {
-
-		// Check if all values provided and if trigger is not already registered
-		if (newArgs && newArgs.hasOwnProperty('event') && registeredTriggers.indexOf(newArgs.event) === -1) {
-
-			// Register trigger
-			registeredTriggers.push(newArgs.event);
-		}
-
-		callback(null, true);
-	});
-
-	// Listen for triggers being removed
-	Homey.manager('flow').on('trigger.ifttt_event.removed', (callback, oldArgs) => {
-
-		// Check if all values provided
-		if (oldArgs && oldArgs.hasOwnProperty('event')) {
-			const i = registeredTriggers.indexOf(oldArgs.event);
-
-			// Check if trigger is registered
-			if (i !== -1) {
-
-				// Remove trigger from list
-				registeredTriggers.splice(i, 1);
-			}
-		}
-
-		callback(null, true);
-	});
-
-	// On triggered ifttt_event
-	Homey.manager('flow').on('trigger.ifttt_event', (callback, args, state) => {
-
-		console.log('IFTTT: on(trigger.ifttt_event)');
-
-		// Check for valid input
-		if (args && args.hasOwnProperty('event')) {
-
-			console.log(`IFTTT: continue with flow ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
-
-			// Return success true if events match
-			callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
-		} else {
-
-			// Return error callback
-			callback(true, false);
-		}
-	});
-
-	// On action trigger_ifttt
-	Homey.manager('flow').on('action.trigger_ifttt', (callback, args) => {
-
-		console.log('IFTTT: on(action.trigger_ifttt)');
-
-		// Make a call to register trigger with ifttt.athom.com
-		registerFlowActionTrigger(args, homeyCloudID, err => {
-			if (err) {
-
-				console.log('Refresh tokens');
-
-				refreshTokens(() => {
-
-					console.log('Retry...');
-
-					// Retry registering action trigger
-					registerFlowActionTrigger(args, homeyCloudID, (err, success) => {
-						callback(err, success);
-					});
-				});
-			} else if (callback) {
-				callback(null, true);
-			}
-		});
-	});
-};
+}
 
 /**
  * Makes a call to ifttt.athom.com to register a
  * flow action trigger event.
- * @param eventName
- * @param homeyCloudID
+ * @param args
  * @param callback
  */
-function registerFlowActionTrigger(args, homeyCloudID, callback) {
+function registerFlowActionTrigger(args, callback) {
 
 	console.log(`Register flow action trigger, event name: ${args.event}, 
 	homey cloud id: ${homeyCloudID}, data: ${args.data}`);
@@ -160,7 +191,7 @@ function refreshTokens(callback) {
 
 			console.error(err, 'Error fetching new tokens');
 
-			if (callback) callback(true, false);
+			if (callback) callback(err);
 		} else {
 
 			console.log('Stored new tokens');
@@ -176,7 +207,7 @@ function refreshTokens(callback) {
 
 					if (callback) callback(null, true);
 				} catch (err) {
-					if (callback) callback(true, false);
+					if (callback) callback(err, false);
 				}
 			} else if (callback) callback(true, false);
 		}
