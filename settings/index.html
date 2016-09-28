@@ -9,7 +9,6 @@
 
 		// TODO this can be removed once Homey.popup() is available in settings
 		function popup(url, options) {
-
 			$('#auth_button').prop('disabled', true);
 			$('#error_message').hide();
 			$('#auth_icon').prop('class', 'fa fa-cog fa-spin');
@@ -26,7 +25,11 @@
 		}
 
 		function onHomeyReady() {
+
 			Homey.ready();
+
+			$('#introText').hide();
+			$('#revertIntroText').hide();
 
 			// Hide all div containers with buttons
 			$('#auth').hide();
@@ -102,6 +105,9 @@
 		}
 
 		function showRevokeButton() {
+			$('#introText').hide();
+			$('#revertIntroText').show();
+
 			$('#auth').hide();
 			$('#revoke').show();
 			$('#revoke_button').prop('disabled', false);
@@ -110,6 +116,9 @@
 		}
 
 		function showAuthButton() {
+			$('#introText').show();
+			$('#revertIntroText').hide();
+
 			$('#auth').show();
 			$('#revoke').hide();
 			$('#revoke_button').prop('disabled', true);
@@ -155,7 +164,8 @@
 </head>
 <body>
 <h1 data-i18n="settings.title"></h1>
-<p data-i18n="settings.intro"></p>
+<p id="introText" data-i18n="settings.intro"></p>
+<p id="revertIntroText" data-i18n="settings.revert_intro"></p>
 <div id="revoke">
 	<button id='revoke_button' class="left" onclick="revokeAccessToken()" data-i18n="settings.revoke"></button>
 </div>

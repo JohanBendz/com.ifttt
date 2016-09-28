@@ -2,7 +2,7 @@
 
 const request = require('request');
 
-let homeyCloudID;
+let homeyCloudID = undefined;
 
 /**
  * Fetch homeyCloudId and registered triggers
@@ -38,7 +38,7 @@ module.exports.init = () => {
  */
 function actionHandler(callback, args) {
 
-	console.log('Register flow action trigger with args: ', args);
+	console.log(`Homey.manager('flow').on('action.trigger_ifttt') -> ${args}`);
 
 	// Make a call to register trigger with ifttt.athom.com
 	registerFlowActionTrigger(args, err => {
@@ -54,11 +54,11 @@ function actionHandler(callback, args) {
 				// Retry registering action trigger
 				registerFlowActionTrigger(args, (err, success) => {
 					if (err) console.error('Error registering flow action trigger, abort', err);
-					callback(err, success);
+					return callback(err, success);
 				});
 			});
 		} else if (callback) {
-			callback(null, true);
+			return callback(null, true);
 		}
 	});
 }
@@ -72,19 +72,21 @@ function actionHandler(callback, args) {
  */
 function triggerHandler(callback, args, state) {
 
-	console.log('Parse incoming trigger with args: ', args);
+	console.log(`Homey.manager('flow').on('trigger.ifttt_event') -> args: ${args}, state: ${state}`);
+
 	// Check for valid input
 	if (args && args.hasOwnProperty('event')) {
 
-		console.log(`IFTTT: continue with flow ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
+		console.log(`Match flow_id and event result: ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
 
 		// Return success true if events match
-		callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
-	} else {
-
-		// Return error callback
-		callback(true, false);
+		return callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
 	}
+
+	console.error('Error: invalid trigger, no property for key "event"');
+
+	// Return error callback
+	return callback(true, false);
 }
 
 /**
@@ -155,18 +157,18 @@ function registerFlowActionTrigger(args, callback) {
 		json: {
 			flowID: args.event,
 			homeyCloudID: homeyCloudID,
-			data: args.data
+			data: args.data,
 		},
 		headers: {
-			Authorization: `Bearer ${Homey.manager('settings').get('ifttt_access_token')}`
-		}
+			Authorization: `Bearer ${Homey.manager('settings').get('ifttt_access_token')}`,
+		},
 	}, (error, response) => {
 		if (!error && response.statusCode === 200) {
 			console.log('IFTTT: succeeded to trigger Realtime API');
-			if (callback) callback(null, true);
+			if (callback) return callback(null, true);
 		} else {
 			console.error(error || response.statusCode !== 200, 'IFTTT: failed to trigger Realtime API');
-			if (callback) callback(true, false);
+			if (callback) return callback(true, false);
 		}
 	});
 }
@@ -184,18 +186,15 @@ function refreshTokens(callback) {
 			client_id: Homey.env.CLIENT_ID,
 			client_secret: Homey.env.CLIENT_SECRET,
 			grant_type: 'refresh_token',
-			refresh_token: Homey.manager('settings').get('ifttt_refresh_token')
-		}
+			refresh_token: Homey.manager('settings').get('ifttt_refresh_token'),
+		},
 	}, (err, response, body) => {
 		if (err) {
 
-			console.error(err, 'Error fetching new tokens');
+			console.error('Error: fetching new tokens', err);
 
-			if (callback) callback(err);
+			if (callback) return callback(err);
 		} else {
-
-			console.log('Stored new tokens');
-
 			if (!err && body) {
 				let parsedResult;
 				try {
@@ -205,11 +204,16 @@ function refreshTokens(callback) {
 					Homey.manager('settings').set('ifttt_access_token', parsedResult.access_token);
 					Homey.manager('settings').set('ifttt_refresh_token', parsedResult.refresh_token);
 
-					if (callback) callback(null, true);
+					console.log('Stored new tokens');
+
+					if (callback) return callback(null, true);
 				} catch (err) {
-					if (callback) callback(err, false);
+
+					console.error('Error: saving access tokens', err);
+
+					if (callback) return callback(err, false);
 				}
-			} else if (callback) callback(true, false);
+			} else if (callback) return callback(true, false);
 		}
 	});
 }
