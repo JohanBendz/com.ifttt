@@ -24,7 +24,10 @@ module.exports = [
 		path: '/authorizationUrl',
 		fn: callback => {
 
-			const homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+			let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+
+			// Check if all credentials are present
+			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback(true);
 
 			// Generate OAuth2 callback, this helps to catch the authorization token
 			Homey.manager('cloud').generateOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/`,

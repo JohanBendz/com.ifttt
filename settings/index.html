@@ -57,7 +57,10 @@
 
 					// Get authorization url
 					Homey.api('GET', '/authorizationUrl/', function (err, url) {
-						if (err) return console.error(err);
+						if (err) {
+							$('#auth_button').prop('disabled', true);
+							return console.error(err);
+						}
 
 						console.log("Got new authorization url");
 

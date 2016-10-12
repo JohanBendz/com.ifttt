@@ -17,6 +17,8 @@ module.exports.init = () => {
 			// Save homey cloud id
 			homeyCloudID = homeyId;
 
+			Homey.manager('settings').set('homeyCloudID', homeyId);
+
 			// Fetch actions and triggers already registered
 			registerTriggers();
 			registerActions();
