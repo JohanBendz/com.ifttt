@@ -1,10 +1,17 @@
 {
-  "settings": {
-    "title": "IFTTT Settings",
-    "webhook_intro": "For IFTTT to work with Homey, you have to register a <a target='_blank' href='http://developers.athom.com/webhooks/'>webhook</a> first. Copy and paste the Webhook URL, ID and Secret into the fields below. You can use the Webhook URL in your IFTTT recipes to trigger events on Homey! <br><br><strong>Make sure that all your recipes that will trigger a flow on Homey have a json encoded body with the following properties: {\"event\":\"your_event_name_here\"}",
-    "ifttt_intro": "Besides that, fill in your IFTTT key below. If you don't have a key yet, please register your <a target='_blank' href='https://ifttt.com/maker'>IFTTT Maker Channel</a>.",
-    "save": "Save",
-    "saved": "Webhook registerd",
-    "not_saved": "Webhook invalid"
-  }
+	"settings":{
+		"title": "IFTTT Settings",
+		"intro": "To let Homey connect with IFTTT please authorize Homey to send basic information on Flow Actions and Triggers to IFTTT.",
+		"authorize": "Connect to IFTTT",
+		"revoke": "Disconnect IFTTT",
+		"authorize_error": "Something went wrong, please try again.",
+		"not_owner": "It appears that this user is not the owner of this Homey, only the owner can connect to IFTTT.",
+		"step1": "Click the connect button below, and log in with your Athom account.",
+		"step1_alt": "Click the disconnect button below to disconnect Homey from IFTTT, to completely withdraw IFTTT access to Homey also disconnect <a href=\"https://ifttt.com/services/homey/settings\" target=\"_blank\">here</a>.",
+		"step2": "To get started follow the steps below: </br></br>1. Create Flow actions and triggers in the Flow Editor using the IFTTT flow cards.",
+		"step3": "2. Create Applets on <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a> where you can select the previously made Flow actions and triggers."
+	},
+	"general": {
+		"major_update_notification": "The IFTTT app update breaks the previously installed version of the IFTTT app. Please check Settings > IFTTT."
+	}
 }

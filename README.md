@@ -1,6 +1,9 @@
 ### IFTTT App
 
-This app lets you connect your IFTTT recipes with Homey! Using the Maker Channel you can create recipes that interact with Homey, and let Homey 
-trigger your IFTTT recipes!
+This app lets you connect your IFTTT recipes with Homey! To connect Homey with IFTTT perform the following steps:
 
-To get started with the IFTTT app check out this [video](https://www.youtube.com/watch?v=1VSngHawri4).
+1. Click the connect button on the App settings page, and log in with your Athom account.
+2. Create Flow actions and triggers in the Flow editor using the IFTTT flow cards.
+3. Create Applets on [IFTTT](https://ifttt.com/my_applets) where you can select the previously made Flow actions and triggers.
+
+Checkout Homey's [IFTTT Channel](https://ifttt.com/homey) to get started!
