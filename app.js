@@ -10,6 +10,25 @@ let homeyCloudID = undefined;
  */
 module.exports.init = () => {
 
+	console.log('com.ifttt running...');
+
+	// Check if there is still some data left from the old IFTTT app
+	if (Homey.manager('settings').get('url') || Homey.manager('settings').get('secret')
+		|| Homey.manager('settings').get('id') || Homey.manager('settings').get('key')) {
+
+		Homey.manager('settings').unset('url');
+		Homey.manager('settings').unset('secret');
+		Homey.manager('settings').unset('id');
+		Homey.manager('settings').unset('key');
+
+		console.log('Update from older version, show notification');
+
+		// Push notification to show user changes to IFTTT app
+		Homey.manager('notifications').createNotification({
+			excerpt: __('general.major_update_notification')
+		});
+	}
+
 	// Fetch homey cloud id
 	Homey.manager('cloud').getHomeyId((err, homeyId) => {
 		if (!err && homeyId) {
@@ -26,8 +45,13 @@ module.exports.init = () => {
 			// Listen for flow card updates and actions/triggers
 			Homey.manager('flow').on('trigger.ifttt_event.update', registerTriggers);
 			Homey.manager('flow').on('action.trigger_ifttt.update', registerActions);
+			Homey.manager('flow').on('action.trigger_ifttt_with_data.update', registerActions);
 			Homey.manager('flow').on('trigger.ifttt_event', triggerHandler);
 			Homey.manager('flow').on('action.trigger_ifttt', actionHandler);
+			Homey.manager('flow').on('action.trigger_ifttt_with_data', actionHandler);
+
+		} else {
+			console.error('Error: could not find Homey ID', err, homeyId);
 		}
 	});
 };
@@ -49,7 +73,14 @@ function actionHandler(callback, args) {
 			console.error('Error registering flow action trigger, trying to refresh tokens', err);
 
 			// Refresh access tokens
-			refreshTokens(() => {
+			refreshTokens(err => {
+				if (err) {
+					console.error('Error: refreshing tokens second time failed', err);
+
+					if (callback) {
+						return callback(`Error: refreshing tokens second time failed ${err}`, true);
+					}
+				}
 
 				console.log('Register flow action trigger with args: ', args);
 
@@ -88,7 +119,7 @@ function triggerHandler(callback, args, state) {
 	console.error('Error: invalid trigger, no property for key "event"');
 
 	// Return error callback
-	return callback(true, false);
+	return callback('Error: invalid trigger, no property for key "event"', false);
 }
 
 /**
@@ -97,11 +128,14 @@ function triggerHandler(callback, args, state) {
  */
 function registerActions() {
 
+	// Clean actions to prevent piling up
+	module.exports.registeredActions = [];
+
 	// Fetch all registered triggers
 	Homey.manager('flow').getActionArgs('trigger_ifttt', (err, actions) => {
 		if (!err && actions) {
 
-			module.exports.registeredActions = [];
+			console.log(`registered Actions trigger_ifttt:`);
 
 			// Loop over triggers
 			actions.forEach(action => {
@@ -113,6 +147,31 @@ function registerActions() {
 					module.exports.registeredActions.push(action.event);
 				}
 			});
+
+			console.log(module.exports.registeredActions);
+		} else if (err) {
+			console.error(`Error: fetching registered Actions ${err}`);
+		}
+	});
+
+	// Fetch all registered triggers
+	Homey.manager('flow').getActionArgs('trigger_ifttt_with_data', (err, actions) => {
+		if (!err && actions) {
+
+			// Loop over triggers
+			actions.forEach(action => {
+
+				// Check if all args are valid and present
+				if (action && action.hasOwnProperty('event')) {
+
+					// Register action
+					module.exports.registeredActions.push(action.event);
+				}
+			});
+
+			console.log(module.exports.registeredActions);
+		} else if (err) {
+			console.error(`Error: fetching registered Actions ${err}`);
 		}
 	});
 }
@@ -127,6 +186,8 @@ function registerTriggers() {
 	Homey.manager('flow').getTriggerArgs('ifttt_event', (err, triggers) => {
 		if (!err && triggers) {
 
+			console.log(`registered Triggers:`);
+
 			module.exports.registeredTriggers = [];
 
 			// Loop over triggers
@@ -139,6 +200,10 @@ function registerTriggers() {
 					module.exports.registeredTriggers.push(trigger.event);
 				}
 			});
+
+			console.log(module.exports.registeredTriggers);
+		} else if (err) {
+			console.error(`Error: fetching registered Triggers ${err}`);
 		}
 	});
 }
@@ -155,11 +220,11 @@ function registerFlowActionTrigger(args, callback) {
 	homey cloud id: ${homeyCloudID}, data: ${args.data}`);
 
 	request.post({
-		url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/a_flow_action_is_triggered',
+		url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/flow_action_is_triggered',
 		json: {
 			flowID: args.event,
 			homeyCloudID: homeyCloudID,
-			data: args.data,
+			data: args.data || '',
 		},
 		headers: {
 			Authorization: `Bearer ${Homey.manager('settings').get('ifttt_access_token')}`,
@@ -169,8 +234,8 @@ function registerFlowActionTrigger(args, callback) {
 			console.log('IFTTT: succeeded to trigger Realtime API');
 			if (callback) return callback(null, true);
 		} else {
-			console.error(error || response.statusCode !== 200, 'IFTTT: failed to trigger Realtime API');
-			if (callback) return callback(true, false);
+			console.error('IFTTT: failed to trigger Realtime API', error || response.statusCode !== 200);
+			if (callback) return callback(`Failed to register flow action: ${(error) ? error : response.statusCode}`);
 		}
 	});
 }
@@ -190,14 +255,14 @@ function refreshTokens(callback) {
 			grant_type: 'refresh_token',
 			refresh_token: Homey.manager('settings').get('ifttt_refresh_token'),
 		},
-	}, (err, response, body) => {
-		if (err) {
+	}, (error, response, body) => {
+		if (error || response.statusCode !== 200) {
 
-			console.error('Error: fetching new tokens', err);
+			console.error(`Error: fetching new tokens ${(error) ? error : response.statusCode}`);
 
-			if (callback) return callback(err);
+			if (callback) return callback(`Error: refreshing tokens: ${(error) ? error : response.statusCode}`);
 		} else {
-			if (!err && body) {
+			if (!error && body) {
 				let parsedResult;
 				try {
 					parsedResult = JSON.parse(body);
@@ -211,11 +276,11 @@ function refreshTokens(callback) {
 					if (callback) return callback(null, true);
 				} catch (err) {
 
-					console.error('Error: saving access tokens', err);
+					console.error('Error: parsing JSON response from refresh tokens', err);
 
-					if (callback) return callback(err, false);
+					if (callback) return callback(`Error: parsing JSON response from refresh tokens ${err}`);
 				}
-			} else if (callback) return callback(true, false);
+			} else if (callback) return callback('Error: no body provided with refresh tokens');
 		}
 	});
 }

@@ -12,8 +12,8 @@ module.exports = [
 			console.log('IFTTT app API: revoking authorization');
 
 			// Reset access tokens
-			Homey.manager('settings').set('ifttt_access_token', false);
-			Homey.manager('settings').set('ifttt_refresh_token', false);
+			Homey.manager('settings').unset('ifttt_access_token');
+			Homey.manager('settings').unset('ifttt_refresh_token');
 
 			if (callback) return callback(null, true);
 		},
@@ -22,15 +22,16 @@ module.exports = [
 		description: 'authorizationUrl',
 		method: 'GET',
 		path: '/authorizationUrl',
+		role: 'owner',
 		fn: callback => {
 
 			let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
 
 			// Check if all credentials are present
-			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback(true);
+			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback('missing_homey_id');
 
 			// Generate OAuth2 callback, this helps to catch the authorization token
-			Homey.manager('cloud').generateOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/`,
+			Homey.manager('cloud').generateOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/&state=${randomString(15)}`,
 
 				// Before fetching authorization code
 				(err, url) => {
@@ -55,7 +56,7 @@ module.exports = [
 							code: code,
 						},
 					}, (err, response, body) => {
-						if (err) return console.error('IFTTT app API: failed to fetch tokens', err);
+						if (err || response.statusCode !== 200) return console.error('IFTTT app API: failed to fetch tokens', (err) ? err : response.statusCode);
 
 						console.log('IFTTT app API: fetched access tokens');
 
@@ -105,7 +106,8 @@ module.exports = [
 
 				// Let Homey speak
 				Homey.manager('speech-output').say(args.body.text, (err, success) => {
-					console.log(`IFTTT app API: performed speech output: ${success}`);
+					if (err) console.error(`IFTTT app API: failed to perform speech output ${err}`);
+					else console.log(`IFTTT app API: performed speech output: ${success}`);
 					if (callback) return callback(err, success);
 				});
 			} else {
@@ -133,11 +135,15 @@ module.exports = [
 					var2: args.body.variable_2 || '',
 					var3: args.body.variable_3 || '',
 				}, { flow_id: args.body.which_flow }, (err, success) => {
-					if (err) console.error(err, `IFTTT app API: failed to trigger ifttt_event: ${args.body.which_flow}`);
+					if (err) console.error(`IFTTT app API: failed to trigger ifttt_event: ${args.body.which_flow}`, err);
 					else console.log(`IFTTT app API: triggered ifttt_event: ${success}`);
 					if (callback) return callback(err, success);
 				});
-			} else if (callback) callback(true, false);
+			} else if (callback) callback('IFTTT app API: invalid parameters provided by IFTTT');
 		},
 	},
 ];
+
+function randomString(length) {
+	return Math.round((Math.pow(36, length + 1) - Math.random() * Math.pow(36, length))).toString(36).slice(1);
+}

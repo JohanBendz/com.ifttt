@@ -1,7 +1,7 @@
 {
 	"id": "com.ifttt",
-	"version": "2.1.1",
-	"compatibility": ">=0.10.3",
+	"version": "2.2.1",
+	"compatibility": ">=1.0.0",
 	"category": "internet",
 	"name": {
 		"en": "IFTTT",
@@ -28,6 +28,10 @@
 				"title": {
 					"en": "On IFTTT event",
 					"nl": "Als IFTTT triggered"
+				},
+				"hint": {
+					"en": "Fill in an event name, save the Flow, and then create an Applet on IFTTT with \"Trigger a Flow\" as action, there you can select the event name filled in here",
+					"nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een Applet aan op IFTTT met als actie \"Trigger a Flow\", selecteer daar de hier ingevulde event naam"
 				},
 				"tokens": [
 					{
@@ -76,6 +80,31 @@
 				"title": {
 					"en": "Trigger IFTTT event",
 					"nl": "Trigger IFTTT actie"
+				},
+				"hint": {
+					"en": "Fill in an event name, save the Flow, and then create an Applet on IFTTT with \"A Flow Action Is Triggered\" as trigger, there you can select the event name filled in here",
+					"nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een Applet aan op IFTTT met als trigger \"A Flow Action Is Triggered\", selecteer daar de hier ingevulde event naam"
+				},
+				"args": [
+					{
+						"name": "event",
+						"type": "text",
+						"placeholder": {
+							"en": "Event name",
+							"nl": "Event naam"
+						}
+					}
+				]
+			},
+			{
+				"id": "trigger_ifttt_with_data",
+				"title": {
+					"en": "Trigger IFTTT event with data",
+					"nl": "Trigger IFTTT actie met data"
+				},
+				"hint": {
+					"en": "Fill in an event name, save the Flow, and then create an Applet on IFTTT with \"A Flow Action Is Triggered\" as trigger, there you can select the event name filled in here",
+					"nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een Applet aan op IFTTT met als trigger \"A Flow Action Is Triggered\", selecteer daar de hier ingevulde event naam"
 				},
 				"args": [
 					{
