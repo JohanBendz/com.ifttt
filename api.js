@@ -25,7 +25,7 @@ module.exports = [
 		role: 'owner',
 		fn: callback => {
 
-			let homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+			const homeyCloudID = Homey.manager('settings').get('homeyCloudID');
 
 			// Check if all credentials are present
 			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback('missing_homey_id');
