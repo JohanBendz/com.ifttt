@@ -246,6 +246,11 @@ function registerFlowActionTrigger(args, callback) {
  */
 function refreshTokens(callback) {
 
+	// Check if all parameters are provided
+	if (!Homey.manager('settings').get('ifttt_refresh_token') || !Homey.env.CLIENT_ID || !Homey.env.CLIENT_SECRET) {
+		return callback('invalid_parameters_provided');
+	}
+
 	// Make request to api to fetch access_token
 	request.post({
 		url: 'https://ifttt.athom.com/oauth2/token',

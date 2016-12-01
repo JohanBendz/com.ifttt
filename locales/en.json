@@ -9,7 +9,7 @@
 		"step1": "Click the connect button below, and log in with your Athom account.",
 		"step1_alt": "Click the disconnect button below to disconnect Homey from IFTTT, to completely withdraw IFTTT access to Homey also disconnect <a href=\"https://ifttt.com/services/homey/settings\" target=\"_blank\">here</a>.",
 		"step2": "To get started follow the steps below: </br></br>1. Create Flow actions and triggers in the Flow Editor using the IFTTT flow cards.",
-		"step3": "2. Create Applets on <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a> where you can select the previously made Flow actions and triggers."
+		"step3": "2. Create Applets on <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a> where you can select the previously made Flow actions and triggers (it might take a couple of minutes before your Flows are visible on IFTTT)."
 	},
 	"general": {
 		"major_update_notification": "The IFTTT app update breaks the previously installed version of the IFTTT app. Please check Settings > IFTTT."

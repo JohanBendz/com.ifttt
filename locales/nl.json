@@ -9,7 +9,7 @@
 		"step1": "Klik op de knop hieronder om met IFTTT te verbinden en log in met je Athom account.",
 		"step1_alt": "Klik op de knop hieronder om de verbinding met IFTTT te verbreken, om de toegang van IFTTT tot Homey compleet terug te trekken verbreek dan ook <a href=\"https://ifttt.com/services/homey/settings\" target=\"_blank\">hier</a> de verbinding met het Homey kanaal.",
 		"step2": "Om te beginnen volg de stappen hieronder: </br></br>1. Maak Flow acties en triggers in de Flow Editor met de IFTTT Flow kaartjes.",
-		"step3": "2. Maak Applets op <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a> waar je de eerder gemaakte Flow acties en triggers kan selecteren."
+		"step3": "2. Maak Applets op <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a> waar je de eerder gemaakte Flow acties en triggers kan selecteren (het kan een paar minuten duren voordat de Flows zichtbaar zijn op IFTTT)."
 	},
 	"general": {
 		"major_update_notification": "De IFTTT app update zorgt ervoor dat de oude IFTTT app niet meer werkt. Zie Instellingen > IFTTT."
