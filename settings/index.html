@@ -7,23 +7,6 @@
 	<script type="text/javascript">
 		let authorizationUrl = '';
 
-		// TODO this can be removed once Homey.popup() is available in settings
-		function popup(url, options) {
-			$('#auth_button').prop('disabled', true);
-			$('#error_message').hide();
-			$('#auth_icon').prop('class', 'fa fa-cog fa-spin');
-
-			options = $.extend({
-				width: 400,
-				height: 400
-			}, options)
-
-			var left = (screen.width / 2) - (options.width / 2);
-			var top = (screen.height / 2) - (options.height / 2);
-
-			return window.open(url, "homey_dialog", "width=" + options.width + ", height=" + options.height + ", left=" + left + ", top=" + top + ", menubar=no, status=no, toolbar=no");
-		}
-
 		function onHomeyReady() {
 
 			Homey.ready();
