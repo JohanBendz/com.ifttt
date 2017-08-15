@@ -12,7 +12,7 @@ let homeyCloudID = undefined;
  */
 module.exports.init = () => {
 
-	console.log('com.ifttt running...');
+	console.log(`${Homey.manifest.id} running...`);
 
 	// Check if there is still some data left from the old IFTTT app
 	if (Homey.manager('settings').get('url') || Homey.manager('settings').get('secret')
