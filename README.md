@@ -7,3 +7,8 @@ This app lets you connect your IFTTT recipes with Homey! To connect Homey with I
 3. Create Applets on [IFTTT](https://ifttt.com/my_applets) where you can select the previously made Flow actions and triggers.
 
 Checkout Homey's [IFTTT Channel](https://ifttt.com/homey) to get started!
+
+#### Changelog
+- 2.2.6: 
+    - Update to SDKv2
+    - Fixed issue where "Which Flow?" would show duplicate values

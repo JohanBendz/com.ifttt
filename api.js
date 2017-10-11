@@ -1,5 +1,7 @@
 'use strict';
 
+const Homey = require('homey');
+
 const request = require('request');
 
 module.exports = [
@@ -7,15 +9,15 @@ module.exports = [
 		description: 'authorizationUrl',
 		method: 'POST',
 		path: '/revokeAuthorization',
-		fn: callback => {
+		fn: (args = {}, callback = () => null) => {
 
-			console.log('IFTTT app API: revoking authorization');
+			Homey.app.log('[IFTTTApi] revoking authorization');
 
 			// Reset access tokens
-			Homey.manager('settings').unset('ifttt_access_token');
-			Homey.manager('settings').unset('ifttt_refresh_token');
+			Homey.ManagerSettings.unset('ifttt_access_token');
+			Homey.ManagerSettings.unset('ifttt_refresh_token');
 
-			if (callback) return callback(null, true);
+			return callback(null, true);
 		},
 	},
 	{
@@ -23,28 +25,22 @@ module.exports = [
 		method: 'GET',
 		path: '/authorizationUrl',
 		role: 'owner',
-		fn: callback => {
+		fn: (args = {}, callback = () => null) => {
 
-			const homeyCloudID = Homey.manager('settings').get('homeyCloudID');
+			const homeyCloudID = Homey.app.homeyId;
 
 			// Check if all credentials are present
-			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback('missing_homey_id');
+			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback(new Error('missing_homey_id'));
 
 			// Generate OAuth2 callback, this helps to catch the authorization token
-			Homey.manager('cloud').generateOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/&state=${randomString(15)}`,
-
-				// Before fetching authorization code
-				(err, url) => {
-					if (err) console.error(err, 'IFTTT app API: failed to fetch authorization url');
-					else console.log('IFTTT app API: fetched authorization url');
-
-					if (callback) return callback(err, url);
-				},
-
-				// After fetching authorization code
-				(err, code) => {
-					if (err) console.error(err, 'IFTTT app API: failed to fetch authorization code');
-					else console.log('IFTTT app API: fetched authorization code');
+			const myOAuth2Callback = new Homey.CloudOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/&state=${randomString(15)}`);
+			myOAuth2Callback
+				.on('url', url => {
+					Homey.app.log('[IFTTTApi] fetched authorization url');
+					return callback(null, url);
+				})
+				.on('code', code => {
+					Homey.app.log('[IFTTTApi] fetched authorization code');
 
 					// Make request to api to fetch access_token
 					request.post({
@@ -53,66 +49,78 @@ module.exports = [
 							client_id: Homey.env.CLIENT_ID,
 							client_secret: Homey.env.CLIENT_SECRET,
 							grant_type: 'authorization_code',
-							code: code,
+							code,
 						},
 					}, (err, response, body) => {
-						if (err || response.statusCode !== 200) return console.error('IFTTT app API: failed to fetch tokens', (err) ? err : response.statusCode);
+						if (err || response.statusCode !== 200) {
+							return Homey.app.error('api -> failed to fetch tokens', err || response.statusCode);
+						}
 
-						console.log('IFTTT app API: fetched access tokens');
+						Homey.app.log('[IFTTTApi] fetched access tokens');
 
 						// Trigger realtime event
-						Homey.manager('api').realtime('authorized', !!(!err && body));
+						Homey.ManagerApi.realtime('authorized', !!(!err && body));
 
 						// Store tokens in settings
 						try {
-							Homey.manager('settings').set('ifttt_access_token', JSON.parse(body).access_token);
-							Homey.manager('settings').set('ifttt_refresh_token', JSON.parse(body).refresh_token);
+							Homey.ManagerSettings.set('ifttt_access_token', JSON.parse(body).access_token);
+							Homey.ManagerSettings.set('ifttt_refresh_token', JSON.parse(body).refresh_token);
 						} catch (err) {
-							console.error('Error saving tokens:', err);
+							Homey.app.error('api -> error saving tokens:', err);
 						}
 					});
-				}
-			);
+
+				})
+				.generate()
+				.catch(err => {
+					Homey.app.log('[IFTTTApi] error while registering CloudOAuth2Callback', err);
+				});
+
 		},
 	},
 	{
 		description: 'getTriggers',
 		method: 'GET',
 		path: '/getTriggers',
-		fn: callback => {
-			console.log('IFTTT app API: incoming /getTriggers returning', Homey.app.registeredTriggers);
-			if (callback) return callback(null, Homey.app.registeredTriggers || []);
+		fn: (args = {}, callback = () => null) => {
+			Homey.app.log('[IFTTTApi] incoming /getTriggers returning', Homey.app.getRegisteredFlowCards('trigger'));
+			return callback(null, Homey.app.getRegisteredFlowCards('trigger'));
 		},
 	},
 	{
 		description: 'getActions',
 		method: 'GET',
 		path: '/getActions',
-		fn: callback => {
-			console.log('IFTTT app API: incoming /getActions returning', Homey.app.registeredActions);
-			if (callback) return callback(null, Homey.app.registeredActions || []);
+		fn: (args = {}, callback = () => null) => {
+			Homey.app.log('[IFTTTApi] incoming /getActions returning', Homey.app.getRegisteredFlowCards('action'));
+			return callback(null, Homey.app.getRegisteredFlowCards('action'));
 		},
 	},
 	{
 		description: 'letHomeySpeak',
 		method: 'POST',
 		path: '/actions/letHomeySpeak',
-		fn: (callback, args) => {
+		fn: (args = {}, callback = () => null) => {
 
-			console.log('IFTTT app API: incoming /actions/letHomeySpeak');
+			Homey.app.log('[IFTTTApi] incoming /actions/letHomeySpeak');
 
 			// Check for valid input parameters
 			if (args && args.body && args.body.text) {
 
 				// Let Homey speak
-				Homey.manager('speech-output').say(args.body.text, (err, success) => {
-					if (err) console.error(`IFTTT app API: failed to perform speech output ${err}`);
-					else console.log(`IFTTT app API: performed speech output: ${success}`);
-					if (callback) return callback(err, success);
-				});
+				Homey.ManagerSpeechOutput.say(args.body.text, {})
+					.then(() => {
+						Homey.app.log(`[IFTTTApi] performed speech output: ${args.body.text}`);
+						return callback(null, true);
+
+					})
+					.catch(err => {
+						Homey.app.error(`api -> failed to perform speech output ${err}`);
+						return callback(err);
+					});
 			} else {
-				console.error('Error: no valid body provided with text to speak');
-				if (callback) return callback('Error: no valid body provided with text to speak');
+				Homey.app.error('api -> error no valid body provided with text to speak');
+				return callback(new Error('error no valid body provided with text to speak'));
 			}
 		},
 	},
@@ -120,26 +128,34 @@ module.exports = [
 		description: 'triggerAFlow',
 		method: 'POST',
 		path: '/actions/triggerAFlow',
-		fn: (callback, args) => {
+		fn: (args = {}, callback = () => null) => {
 
-			console.log('IFTTT app API: incoming /actions/triggerAFlow');
+			Homey.app.log('[IFTTTApi] incoming /actions/triggerAFlow');
 
 			// Check for valid input parameters
 			if (args && args.body && args.body.which_flow) {
 
-				console.log(`IFTTT app API: trigger ifttt_event: ${args.body.which_flow}`);
-
+				Homey.app.log(`[IFTTTApi] trigger ifttt_event: ${args.body.which_flow}`);
+				Homey.app.log(Homey.app.getTriggerFlowCard('ifttt_event'))
 				// Trigger flow ifttt_event
-				Homey.manager('flow').trigger('ifttt_event', {
-					var1: args.body.variable_1 || '',
-					var2: args.body.variable_2 || '',
-					var3: args.body.variable_3 || '',
-				}, { flow_id: args.body.which_flow }, (err, success) => {
-					if (err) console.error(`IFTTT app API: failed to trigger ifttt_event: ${args.body.which_flow}`, err);
-					else console.log(`IFTTT app API: triggered ifttt_event: ${success}`);
-					if (callback) return callback(err, success);
-				});
-			} else if (callback) callback('IFTTT app API: invalid parameters provided by IFTTT');
+				Homey.app.getTriggerFlowCard('ifttt_event').trigger(
+					{
+						var1: args.body.variable_1 || '',
+						var2: args.body.variable_2 || '',
+						var3: args.body.variable_3 || '',
+					},
+					{
+						flow_id: args.body.which_flow,
+					})
+					.then(() => {
+						Homey.app.log(`[IFTTTApi] triggered ifttt_event: ${args.body.which_flow}`);
+						return callback(null, true);
+					})
+					.catch(err => {
+						Homey.app.error(`api -> failed to trigger ifttt_event: ${args.body.which_flow}`, err);
+						return callback(err);
+					});
+			} else return callback(new Error('invalid parameters provided by IFTTT'));
 		},
 	},
 ];
