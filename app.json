@@ -2,7 +2,7 @@
   "id": "com.ifttt",
   "version": "2.2.6",
   "sdk": 2,
-  "compatibility": ">=1.5.0",
+  "compatibility": ">=1.5.4",
   "category": "internet",
   "name": {
     "en": "IFTTT",
