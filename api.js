@@ -33,7 +33,7 @@ module.exports = [
 			if (!Homey.env.CLIENT_ID || !homeyCloudID) return callback(new Error('missing_homey_id'));
 
 			// Generate OAuth2 callback, this helps to catch the authorization token
-			const myOAuth2Callback = new Homey.CloudOAuth2Callback(`https://ifttt.athom.com/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/&state=${randomString(15)}`);
+			const myOAuth2Callback = new Homey.CloudOAuth2Callback(`${Homey.app.baseUrl}/oauth2/authorize?response_type=code&client_id=${Homey.env.CLIENT_ID}&homey_cloud_id=${homeyCloudID}&redirect_uri=https://callback.athom.com/oauth2/callback/&state=${randomString(15)}`);
 			myOAuth2Callback
 				.on('url', url => {
 					Homey.app.log('[IFTTTApi] fetched authorization url');
@@ -44,7 +44,7 @@ module.exports = [
 
 					// Make request to api to fetch access_token
 					request.post({
-						url: 'https://ifttt.athom.com/oauth2/token',
+						url: `${Homey.app.baseUrl}/oauth2/token`,
 						form: {
 							client_id: Homey.env.CLIENT_ID,
 							client_secret: Homey.env.CLIENT_SECRET,

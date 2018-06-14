@@ -26,6 +26,7 @@ class IFTTTApp extends Homey.App {
 			Homey.ManagerSettings.set('homeyCloudID', homeyId);
 		}
 		this.homeyId = homeyId;
+		this.baseUrl = 'https://ifttt.athomdev.com';
 
 		// Initialize given flow cards
 		this.flowCards = await this.initializeFlowCards({
@@ -250,7 +251,7 @@ class IFTTTApp extends Homey.App {
 
 		return new Promise((resolve, reject) => {
 			request.post({
-				url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/flow_action_is_triggered',
+				url: `${this.baseUrl}/ifttt/v1/triggers/register/flow_action_is_triggered`,
 				json: {
 					flowID: args.event,
 					homeyCloudID: this.homeyId,
@@ -286,7 +287,7 @@ class IFTTTApp extends Homey.App {
 
 			// Make request to api to fetch access_token
 			request.post({
-				url: 'https://ifttt.athom.com/oauth2/token',
+				url: `${this.baseUrl}/oauth2/token`,
 				form: {
 					client_id: Homey.env.CLIENT_ID,
 					client_secret: Homey.env.CLIENT_SECRET,
