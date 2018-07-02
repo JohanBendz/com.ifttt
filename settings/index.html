@@ -1,15 +1,59 @@
 <!doctype html>
 <html>
 <head>
+	<script type="text/javascript" src="/homey.js" data-origin="settings"></script>
 	<script type="text/javascript" src="/manager/webserver/assets/js/jquery.js"></script>
 	<link rel="stylesheet" href="/manager/webserver/assets/css/font.awesome.css">
 
 	<script type="text/javascript">
 		let authorizationUrl = '';
 
-		function onHomeyReady() {
-
+		var revokeAccessToken = function(){};
+		var popup = function(){};
+		function onHomeyReady(Homey) {
 			Homey.ready();
+
+			popup = function(url) {
+				return Homey.popup(url);
+			};
+
+			revokeAccessToken = function() {
+
+				// Disable button while processing
+				$('#revoke_button').prop('disabled', true);
+				$('#revoke_icon').prop('class', 'fa fa-cog fa-spin');
+
+				// Post revoke auth to remove access tokens
+				Homey.api('POST', 'revokeAuthorization', {}, function (err, success) {
+					if (!err && success) {
+
+						console.log('revoked authorization');
+
+						// Get authorization url
+						Homey.api('GET', '/authorizationUrl/', {}, function (err, url) {
+							if (err) {
+								$('#error_message').text(__('settings.not_owner'));
+								$('#error_message').show();
+								return console.error(err);
+							}
+
+							console.log("Got new authorization url");
+
+							authorizationUrl = url;
+
+							setTimeout(function () {
+
+								// Show auth button
+								showAuthButton();
+
+								// Disable all buttons
+								$('#revoke_button').prop('disabled', false);
+								$('#auth_button').prop('disabled', false);
+							}, 1000);
+						});
+					}
+				});
+			}
 
 			$('#introText').hide();
 
@@ -38,7 +82,7 @@
 					showAuthButton();
 
 					// Get authorization url
-					Homey.api('GET', '/authorizationUrl/', function (err, url) {
+					Homey.api('GET', '/authorizationUrl/', {} ,function (err, url) {
 						if (err) {
 							$('#auth_button').prop('disabled', true);
 							$('#error_message').text(__('settings.not_owner'));
@@ -72,7 +116,7 @@
 				} else {
 
 					// Get authorization url
-					Homey.api('GET', '/authorizationUrl/', function (err, url) {
+					Homey.api('GET', '/authorizationUrl/', {}, function (err, url) {
 						if (err) {
 							$('#error_message').text(__('settings.not_owner'));
 							$('#error_message').show();
@@ -126,44 +170,6 @@
 			$('#auth_icon').prop('class', '');
 		}
 
-		function revokeAccessToken() {
-
-			// Disable button while processing
-			$('#revoke_button').prop('disabled', true);
-			$('#revoke_icon').prop('class', 'fa fa-cog fa-spin');
-
-			// Post revoke auth to remove access tokens
-			Homey.api('POST', 'revokeAuthorization', function (err, success) {
-				if (!err && success) {
-
-					console.log('revoked authorization');
-
-					// Get authorization url
-					Homey.api('GET', '/authorizationUrl/', function (err, url) {
-						if (err) {
-							$('#error_message').text(__('settings.not_owner'));
-							$('#error_message').show();
-							return console.error(err);
-						}
-
-						console.log("Got new authorization url");
-
-						authorizationUrl = url;
-
-						setTimeout(function () {
-
-							// Show auth button
-							showAuthButton();
-
-							// Disable all buttons
-							$('#revoke_button').prop('disabled', false);
-							$('#auth_button').prop('disabled', false);
-						}, 1000);
-					});
-				}
-			});
-		}
-
 	</script>
 </head>
 <body>
@@ -177,7 +183,7 @@
 	<button id='revoke_button' class="left" onclick="revokeAccessToken()" data-i18n="settings.revoke"></button>
 </div>
 <div id="auth">
-	<button id='auth_button' class="left" onclick="Homey.popup(authorizationUrl)" data-i18n="settings.authorize"></button>
+	<button id='auth_button' class="left" onclick="popup(authorizationUrl)" data-i18n="settings.authorize"></button>
 </div>
 <p id="error_message" data-i18n="settings.authorize_error" style="float: left; clear: both; line-height:28px; color: red;"></p>
 

@@ -1,293 +1,323 @@
 'use strict';
 
+const Homey = require('homey');
 const Log = require('homey-log').Log;
 
 const request = require('request');
 
-let homeyCloudID = undefined;
+class IFTTTApp extends Homey.App {
 
-/**
- * Fetch homeyCloudId and registered triggers
- * and actions. Start listening for flow events.
- */
-module.exports.init = () => {
+	/**
+	 * Async App initialization. Handles migration, retrieving Homey's cloud id and registering the FlowCards.
+	 * @returns {Promise.<*>}
+	 */
+	async onInit() {
 
-	console.log(`${Homey.manifest.id} running...`);
+		this.log(`${Homey.manifest.id} running...`);
 
-	// Check if there is still some data left from the old IFTTT app
-	if (Homey.manager('settings').get('url') || Homey.manager('settings').get('secret')
-		|| Homey.manager('settings').get('id') || Homey.manager('settings').get('key')) {
+		// If needed, migrate to current app
+		this.migrateToCurrent();
 
-		Homey.manager('settings').unset('url');
-		Homey.manager('settings').unset('secret');
-		Homey.manager('settings').unset('id');
-		Homey.manager('settings').unset('key');
+		// Fetch and store homey cloud id
+		let homeyId = Homey.ManagerSettings.get('homeyCloudID');
+		if (!homeyId) {
+			homeyId = await Homey.ManagerCloud.getHomeyId();
+			if (homeyId instanceof Error) return this.error('Error: could not find Homey ID', homeyId);
+			Homey.ManagerSettings.set('homeyCloudID', homeyId);
+		}
+		this.homeyId = homeyId;
+		this.baseUrl = 'https://ifttt.athomdev.com';
 
-		console.log('Update from older version, show notification');
-
-		// Push notification to show user changes to IFTTT app
-		Homey.manager('notifications').createNotification({
-			excerpt: __('general.major_update_notification')
+		// Initialize given flow cards
+		this.flowCards = await this.initializeFlowCards({
+			action: {
+				trigger_ifttt: {
+					instance: null,
+					registered: new Set(),
+				},
+				trigger_ifttt_with_data: {
+					instance: null,
+					registered: new Set(),
+				},
+			},
+			trigger: {
+				ifttt_event: {
+					instance: null,
+					registered: new Set(),
+				},
+			},
 		});
 	}
 
-	// Fetch homey cloud id
-	Homey.manager('cloud').getHomeyId((err, homeyId) => {
-		if (!err && homeyId) {
+	/**
+	 * Method that initializes and registers given FlowCards.
+	 * @param {Object} flowCards
+	 * @param {Object} flowCards.action - Object with FlowCard ids as key
+	 * @param {Homey.FlowCardAction} flowCards.action.<FlowCardId>.instance - Homey.FlowCardAction instance
+	 * @param {Set} flowCards.action.<FlowCardId>.registered - Set of all registered flow card actions
+	 * @param {Object} flowCards.trigger
+	 * @param {Homey.FlowCardTrigger} flowCards.trigger.<FlowCardId>.instance - Homey.FlowCardTrigger instance
+	 * @param {Set} flowCards.trigger.<FlowCardId>.registered - Set of all registered flow card triggers
+	 * @returns {Object} flowCards - Initialized flowCards object
+	 */
+	async initializeFlowCards(flowCards) {
 
-			// Save homey cloud id
-			homeyCloudID = homeyId;
+		// Loop over all flow cards
+		for (let flowCardType in flowCards) {
+			for (let flowCardId in flowCards[flowCardType]) {
+				let flowCard = null;
 
-			Homey.manager('settings').set('homeyCloudID', homeyId);
+				// Create new FlowCard depending on type
+				switch (flowCardType) {
+					case 'trigger':
+						flowCard = new Homey.FlowCardTrigger(flowCardId);
+						flowCard.register();
+						flowCard.registerRunListener(this.triggerHandler.bind(this));
+						break;
+					case 'action':
+						flowCard = new Homey.FlowCardAction(flowCardId);
+						flowCard.register();
+						flowCard.registerRunListener(this.actionHandler.bind(this));
+						break;
+					default:
+						throw new Error('invalid_flow_card_type');
+				}
 
-			// Fetch actions and triggers already registered
-			registerTriggers();
-			registerActions();
+				// Store FlowCard instance
+				flowCards[flowCardType][flowCardId].instance = flowCard;
 
-			// Listen for flow card updates and actions/triggers
-			Homey.manager('flow').on('trigger.ifttt_event.update', registerTriggers);
-			Homey.manager('flow').on('action.trigger_ifttt.update', registerActions);
-			Homey.manager('flow').on('action.trigger_ifttt_with_data.update', registerActions);
-			Homey.manager('flow').on('trigger.ifttt_event', triggerHandler);
-			Homey.manager('flow').on('action.trigger_ifttt', actionHandler);
-			Homey.manager('flow').on('action.trigger_ifttt_with_data', actionHandler);
+				// Bind update event
+				flowCard.on('update', () => {
+					return this.registerFlowCard.call(this, flowCards[flowCardType][flowCardId]);
+				});
 
-		} else {
-			console.error('Error: could not find Homey ID', err, homeyId);
+				// Register flow cards
+				await this.registerFlowCard(flowCards[flowCardType][flowCardId]);
+			}
 		}
-	});
-};
 
-/**
- * Incoming flow action event, register
- * it with IFTTT as an action trigger.
- * @param callback
- * @param args
- */
-function actionHandler(callback, args) {
+		return flowCards;
+	}
 
-	console.log(`Homey.manager('flow').on('action.trigger_ifttt') -> ${args}`);
+	/**
+	 * Migrate settings from previous app version to the current one.
+	 */
+	migrateToCurrent() {
 
-	// Make a call to register trigger with ifttt.athom.com
-	registerFlowActionTrigger(args, err => {
-		if (err) {
+		// Check if there is still some data left from the old IFTTT app
+		if (Homey.ManagerSettings.get('url') || Homey.ManagerSettings.get('secret')
+			|| Homey.ManagerSettings.get('id') || Homey.ManagerSettings.get('key')) {
 
-			console.error('Error registering flow action trigger, trying to refresh tokens', err);
+			Homey.ManagerSettings.unset('url');
+			Homey.ManagerSettings.unset('secret');
+			Homey.ManagerSettings.unset('id');
+			Homey.ManagerSettings.unset('key');
 
-			// Refresh access tokens
-			refreshTokens(err => {
-				if (err) {
-					console.error('Error: refreshing tokens second time failed', err);
+			this.log('migrated to current, notified user via notification');
 
-					if (callback) {
-						return callback(`Error: refreshing tokens second time failed ${err}`, true);
+			// Push notification to show user changes to IFTTT app
+			new Homey.Notification({ excerpt: Homey.__('general.major_update_notification') })
+				.register();
+		}
+	}
+
+	/**
+	 * Getter for a Homey.FlowCardTrigger instance.
+	 * @param {string} id - Flow card id to retrieve
+	 * @returns {Homey.FlowCardTrigger}
+	 */
+	getTriggerFlowCard(id) {
+		return this.flowCards.trigger[id].instance;
+	}
+
+	/**
+	 * Getter for an array of all registered FlowCards
+	 * @param {string} type - Type of registered FlowCards to retrieve
+	 * @returns {Array} Unique event names of all registered FlowCards of type
+	 */
+	getRegisteredFlowCards(type) {
+		const result = new Set();
+		for (let i in this.flowCards[type]) {
+			this.flowCards[type][i].registered.forEach(value => {
+				result.add(value);
+			});
+		}
+		return Array.from(result);
+
+	}
+
+	/**
+	 * Incoming flow action event, register it with IFTTT as an action trigger.
+	 * @param {Object} args
+	 * @param {string} args.event - Event name as entered by user in FlowCard argument
+	 * @param {string} args.data - Data as entered by user in FlowCard argument
+	 * @param {Object} state
+	 * @param {Function} callback
+	 */
+	actionHandler(args = {}, state = {}, callback = () => null) {
+
+		this.log(`actionHandler() -> register event: ${args.event}, data: ${args.data}`);
+
+		// Make a call to register trigger with ifttt.athom.com
+		this.registerFlowActionTrigger(args)
+			.then(() => callback(null, true))
+			.catch(err => {
+				this.error('actionHandler() -> error registering flow action trigger, trying to refresh tokens', err);
+
+				// Refresh access tokens
+				return this.refreshTokens()
+					.then(() => {
+
+						this.log(`actionHandler() -> refreshed access tokens, retry register event: ${args.event}, data: ${args.data}`);
+
+						// Retry registering action trigger
+						return this.registerFlowActionTrigger(args);
+					})
+					.then(() => callback(null, true))
+					.catch(err => {
+						this.error('actionHandler() -> error registering flow action trigger, abort', err);
+						return callback(err);
+					});
+			})
+			.catch(err => {
+				this.error('actionHandler() -> error refreshing tokens second time failed', err);
+				return callback(err);
+			});
+	}
+
+	/**
+	 * Handle flow trigger parsing, check if events match and are valid.
+	 * @param {Object} args
+	 * @param {string} args.event - Event name as entered by user in FlowCard argument
+	 * @param {Object} state
+	 * @param {Function} callback
+	 */
+	triggerHandler(args = {}, state = {}, callback = () => null) {
+
+		this.log(`triggerHandler() -> args: ${args}, state: ${state}`);
+
+		// Check for valid input
+		if (args && args.hasOwnProperty('event')) {
+
+			this.log(`triggerHandler() -> event matched: ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
+
+			// Return success true if events match
+			return callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
+		}
+
+		this.error('triggerHandler() -> error invalid trigger missing args.event property');
+
+		// Return error callback
+		return callback(new Error('error invalid trigger missing args.event property'));
+	}
+
+	/**
+	 * Method that takes a FlowCard instance and fetches all the registered flow cards and their arguments, which is
+	 * stored for later reference.
+	 * @param {Homey.FlowCard} flowCard - FlowCard instance to  retrieve registered arguments for
+	 * @returns {Promise.<*>}
+	 */
+	async registerFlowCard({ instance: flowCard, registered: registeredFlowCardSet }) {
+		this.log(`registerFlowCard() -> type: ${flowCard.type}, id: ${flowCard.id}`);
+
+		// Clear actions set to prevent piling up
+		registeredFlowCardSet.clear();
+
+		const flowCardArgumentValues = await flowCard.getArgumentValues();
+		if (flowCardArgumentValues instanceof Error) return this.error(`Error: fetching registered Actions ${flowCardArgumentValues}`);
+
+		// Loop over triggers
+		flowCardArgumentValues.forEach(flowCardArgumentValue => {
+
+			// Check if all args are valid and present
+			if (flowCardArgumentValue && flowCardArgumentValue.hasOwnProperty('event')) {
+
+				// Register action
+				registeredFlowCardSet.add(flowCardArgumentValue.event);
+			}
+		});
+
+		this.log('registerFlowCard() -> result:', registeredFlowCardSet);
+	}
+
+	/**
+	 * Makes a call to https://ifttt.athom.com to register a flow action trigger event.
+	 * @param args
+	 * @returns {Promise}
+	 */
+	registerFlowActionTrigger(args = {}) {
+
+		this.log(`registerFlowActionTrigger() -> event: ${args.event}, homey id: ${this.homeyId}, data: ${args.data}`);
+
+		return new Promise((resolve, reject) => {
+			request.post({
+				url: `${this.baseUrl}/ifttt/v1/triggers/register/flow_action_is_triggered`,
+				json: {
+					flowID: args.event,
+					homeyCloudID: this.homeyId,
+					data: args.data || '',
+				},
+				headers: {
+					Authorization: `Bearer ${Homey.ManagerSettings.get('ifttt_access_token')}`,
+				},
+			}, (error, response) => {
+				if (!error && response.statusCode === 200) {
+					this.log('registerFlowActionTrigger() -> triggered IFTTT realtime api');
+					return resolve();
+				}
+				this.error('registerFlowActionTrigger() -> error could not trigger IFTTT realtime api:', error || response.statusCode !== 200);
+				return reject(new Error(`error could not trigger IFTTT realtime api: ${(error) ? error : response.statusCode}`));
+			});
+		});
+	}
+
+	/**
+	 * Tries to refresh the stored access and refresh tokens.
+	 * @returns {Promise}
+	 */
+	refreshTokens() {
+		this.log('refreshTokens()');
+
+		return new Promise((resolve, reject) => {
+
+			// Check if all parameters are provided
+			if (!Homey.ManagerSettings.get('ifttt_refresh_token') || !Homey.env.CLIENT_ID || !Homey.env.CLIENT_SECRET) {
+				return reject(new Error('invalid_parameters_provided'));
+			}
+
+			// Make request to api to fetch access_token
+			request.post({
+				url: `${this.baseUrl}/oauth2/token`,
+				form: {
+					client_id: Homey.env.CLIENT_ID,
+					client_secret: Homey.env.CLIENT_SECRET,
+					grant_type: 'refresh_token',
+					refresh_token: Homey.ManagerSettings.get('ifttt_refresh_token'),
+				},
+			}, (error, response, body) => {
+				if (error || response.statusCode !== 200) {
+					this.error(`refreshTokens() -> error fetching new tokens: ${(error) ? error : response.statusCode}`);
+					return reject(new Error(`error fetching new tokens: ${(error) ? error : response.statusCode}`));
+				}
+				if (!error && body) {
+					let parsedResult;
+					try {
+						parsedResult = JSON.parse(body);
+
+						// Store new access tokens
+						Homey.ManagerSettings.set('ifttt_access_token', parsedResult.access_token);
+						Homey.ManagerSettings.set('ifttt_refresh_token', parsedResult.refresh_token);
+						this.log('refreshTokens() -> stored new tokens');
+						return resolve();
+					} catch (err) {
+						this.error(`refreshTokens() -> error parsing JSON response from refresh tokens: ${err}`);
+						return reject(new Error(`error parsing JSON response from refresh tokens: ${err}`));
 					}
 				}
-
-				console.log('Register flow action trigger with args: ', args);
-
-				// Retry registering action trigger
-				registerFlowActionTrigger(args, (err, success) => {
-					if (err) console.error('Error registering flow action trigger, abort', err);
-					return callback(err, success);
-				});
+				return reject(new Error('error no body provided with refresh tokens'));
 			});
-		} else if (callback) {
-			return callback(null, true);
-		}
-	});
-}
-
-/**
- * Handle flow trigger parsing, check
- * if events match and are valid.
- * @param callback
- * @param args
- * @param state
- */
-function triggerHandler(callback, args, state) {
-
-	console.log(`Homey.manager('flow').on('trigger.ifttt_event') -> args: ${args}, state: ${state}`);
-
-	// Check for valid input
-	if (args && args.hasOwnProperty('event')) {
-
-		console.log(`Match flow_id and event result: ${args.event.toLowerCase() === state.flow_id.toLowerCase()}`);
-
-		// Return success true if events match
-		return callback(null, (args.event.toLowerCase() === state.flow_id.toLowerCase()));
+		});
 	}
-
-	console.error('Error: invalid trigger, no property for key "event"');
-
-	// Return error callback
-	return callback('Error: invalid trigger, no property for key "event"', false);
 }
 
-/**
- * Register all action flow cards
- * that are saved.
- */
-function registerActions() {
-
-	// Clean actions to prevent piling up
-	module.exports.registeredActions = [];
-
-	// Fetch all registered triggers
-	Homey.manager('flow').getActionArgs('trigger_ifttt', (err, actions) => {
-		if (!err && actions) {
-
-			console.log(`registered Actions trigger_ifttt:`);
-
-			// Loop over triggers
-			actions.forEach(action => {
-
-				// Check if all args are valid and present
-				if (action && action.hasOwnProperty('event')) {
-
-					// Register action
-					module.exports.registeredActions.push(action.event);
-				}
-			});
-
-			console.log(module.exports.registeredActions);
-		} else if (err) {
-			console.error(`Error: fetching registered Actions ${err}`);
-		}
-	});
-
-	// Fetch all registered triggers
-	Homey.manager('flow').getActionArgs('trigger_ifttt_with_data', (err, actions) => {
-		if (!err && actions) {
-
-			// Loop over triggers
-			actions.forEach(action => {
-
-				// Check if all args are valid and present
-				if (action && action.hasOwnProperty('event')) {
-
-					// Register action
-					module.exports.registeredActions.push(action.event);
-				}
-			});
-
-			console.log(module.exports.registeredActions);
-		} else if (err) {
-			console.error(`Error: fetching registered Actions ${err}`);
-		}
-	});
-}
-
-/**
- * Register all trigger flow cards
- * that are saved.
- */
-function registerTriggers() {
-
-	// Fetch all registered triggers
-	Homey.manager('flow').getTriggerArgs('ifttt_event', (err, triggers) => {
-		if (!err && triggers) {
-
-			console.log(`registered Triggers:`);
-
-			module.exports.registeredTriggers = [];
-
-			// Loop over triggers
-			triggers.forEach(trigger => {
-
-				// Check if all args are valid and present
-				if (trigger && trigger.hasOwnProperty('event')) {
-
-					// Register trigger
-					module.exports.registeredTriggers.push(trigger.event);
-				}
-			});
-
-			console.log(module.exports.registeredTriggers);
-		} else if (err) {
-			console.error(`Error: fetching registered Triggers ${err}`);
-		}
-	});
-}
-
-/**
- * Makes a call to ifttt.athom.com to register a
- * flow action trigger event.
- * @param args
- * @param callback
- */
-function registerFlowActionTrigger(args, callback) {
-
-	console.log(`Register flow action trigger, event name: ${args.event}, 
-	homey cloud id: ${homeyCloudID}, data: ${args.data}`);
-
-	request.post({
-		url: 'https://ifttt.athom.com/ifttt/v1/triggers/register/flow_action_is_triggered',
-		json: {
-			flowID: args.event,
-			homeyCloudID: homeyCloudID,
-			data: args.data || '',
-		},
-		headers: {
-			Authorization: `Bearer ${Homey.manager('settings').get('ifttt_access_token')}`,
-		},
-	}, (error, response) => {
-		if (!error && response.statusCode === 200) {
-			console.log('IFTTT: succeeded to trigger Realtime API');
-			if (callback) return callback(null, true);
-		} else {
-			console.error('IFTTT: failed to trigger Realtime API', error || response.statusCode !== 200);
-			if (callback) return callback(`Failed to register flow action: ${(error) ? error : response.statusCode}`);
-		}
-	});
-}
-
-/**
- * Tries to refresh the stored access and refresh tokens.
- * @param callback
- */
-function refreshTokens(callback) {
-
-	// Check if all parameters are provided
-	if (!Homey.manager('settings').get('ifttt_refresh_token') || !Homey.env.CLIENT_ID || !Homey.env.CLIENT_SECRET) {
-		return callback('invalid_parameters_provided');
-	}
-
-	// Make request to api to fetch access_token
-	request.post({
-		url: 'https://ifttt.athom.com/oauth2/token',
-		form: {
-			client_id: Homey.env.CLIENT_ID,
-			client_secret: Homey.env.CLIENT_SECRET,
-			grant_type: 'refresh_token',
-			refresh_token: Homey.manager('settings').get('ifttt_refresh_token'),
-		},
-	}, (error, response, body) => {
-		if (error || response.statusCode !== 200) {
-
-			console.error(`Error: fetching new tokens ${(error) ? error : response.statusCode}`);
-
-			if (callback) return callback(`Error: refreshing tokens: ${(error) ? error : response.statusCode}`);
-		} else {
-			if (!error && body) {
-				let parsedResult;
-				try {
-					parsedResult = JSON.parse(body);
-
-					// Store new access tokens
-					Homey.manager('settings').set('ifttt_access_token', parsedResult.access_token);
-					Homey.manager('settings').set('ifttt_refresh_token', parsedResult.refresh_token);
-
-					console.log('Stored new tokens');
-
-					if (callback) return callback(null, true);
-				} catch (err) {
-
-					console.error('Error: parsing JSON response from refresh tokens', err);
-
-					if (callback) return callback(`Error: parsing JSON response from refresh tokens ${err}`);
-				}
-			} else if (callback) return callback('Error: no body provided with refresh tokens');
-		}
-	});
-}
+module.exports = IFTTTApp;

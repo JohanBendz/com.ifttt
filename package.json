@@ -4,8 +4,8 @@
   "description": "This app lets you connect your IFTTT recipes with Homey! To connect Homey with IFTTT perform the following steps:",
   "main": "app.js",
   "dependencies": {
-    "request": "^2.73.0",
-    "homey-log": "^1.0.1"
+    "homey-log": "^1.0.5",
+    "request": "^2.73.0"
   },
   "devDependencies": {},
   "scripts": {
