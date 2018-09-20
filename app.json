@@ -1,9 +1,10 @@
 {
   "id": "com.ifttt",
-  "version": "2.2.7",
+  "version": "2.2.8",
   "sdk": 2,
   "compatibility": ">=1.5.4",
   "category": "internet",
+  "brandColor": "#0099FB",
   "name": {
     "en": "IFTTT",
     "nl": "IFTTT"
