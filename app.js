@@ -26,7 +26,7 @@ class IFTTTApp extends Homey.App {
 			Homey.ManagerSettings.set('homeyCloudID', homeyId);
 		}
 		this.homeyId = homeyId;
-		this.baseUrl = 'https://ifttt.athomdev.com';
+		this.baseUrl = Homey.env.BASE_URL || 'https://ifttt.athom.com';
 
 		// Initialize given flow cards
 		this.flowCards = await this.initializeFlowCards({
