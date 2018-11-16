@@ -137,6 +137,12 @@ module.exports = [
 
 				Homey.app.log(`[IFTTTApi] trigger ifttt_event: ${args.body.which_flow}`);
 				Homey.app.log(Homey.app.getTriggerFlowCard('ifttt_event'))
+
+				// Check if trigger is registered on Homey upfront
+				if (!Homey.app.getRegisteredFlowCards('trigger').includes(args.body.which_flow)) {
+					return callback(new Error('No trigger registered on Homey for this which_flow value'));
+				}
+
 				// Trigger flow ifttt_event
 				Homey.app.getTriggerFlowCard('ifttt_event').trigger(
 					{
