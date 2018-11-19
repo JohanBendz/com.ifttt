@@ -249,6 +249,7 @@ class IFTTTApp extends Homey.App {
 
 		this.log(`registerFlowActionTrigger() -> event: ${args.event}, homey id: ${this.homeyId}, data: ${args.data}`);
 
+		const accessToken = Homey.ManagerSettings.get('athom-cloud-ifttt-token') || Homey.ManagerSettings.get('ifttt_access_token');
 		return new Promise((resolve, reject) => {
 			request.post({
 				url: `${this.baseUrl}/ifttt/v1/triggers/register/flow_action_is_triggered`,
@@ -258,7 +259,7 @@ class IFTTTApp extends Homey.App {
 					data: args.data || '',
 				},
 				headers: {
-					Authorization: `Bearer ${Homey.ManagerSettings.get('ifttt_access_token')}`,
+					Authorization: `Bearer ${accessToken}`,
 				},
 			}, (error, response) => {
 				if (!error && response.statusCode === 200) {

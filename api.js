@@ -164,6 +164,18 @@ module.exports = [
 			} else return callback(new Error('invalid parameters provided by IFTTT'));
 		},
 	},
+	{
+		description: 'token exchange',
+		method: 'PUT',
+		path: '/token',
+		fn: (args = {}, callback = () => null) => {
+			if (args.body && args.body.token) {
+				Homey.ManagerSettings.set('athom-cloud-ifttt-token', args.body.token);
+				return callback(null, true);
+			}
+			return callback(new Error('invalid_token_object'));
+		},
+	},
 ];
 
 function randomString(length) {
