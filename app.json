@@ -1,6 +1,6 @@
 {
   "id": "com.ifttt",
-  "version": "2.2.11",
+  "version": "2.2.12",
   "sdk": 2,
   "compatibility": ">=1.5.4",
   "category": "internet",
