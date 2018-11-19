@@ -63,8 +63,8 @@ class IFTTTApp extends Homey.App {
 	async initializeFlowCards(flowCards) {
 
 		// Loop over all flow cards
-		for (let flowCardType in flowCards) {
-			for (let flowCardId in flowCards[flowCardType]) {
+		for (const flowCardType in flowCards) {
+			for (const flowCardId in flowCards[flowCardType]) {
 				let flowCard = null;
 
 				// Create new FlowCard depending on type
@@ -87,9 +87,7 @@ class IFTTTApp extends Homey.App {
 				flowCards[flowCardType][flowCardId].instance = flowCard;
 
 				// Bind update event
-				flowCard.on('update', () => {
-					return this.registerFlowCard.call(this, flowCards[flowCardType][flowCardId]);
-				});
+				flowCard.on('update', () => this.registerFlowCard.call(this, flowCards[flowCardType][flowCardId]));
 
 				// Register flow cards
 				await this.registerFlowCard(flowCards[flowCardType][flowCardId]);
@@ -137,7 +135,7 @@ class IFTTTApp extends Homey.App {
 	 */
 	getRegisteredFlowCards(type) {
 		const result = new Set();
-		for (let i in this.flowCards[type]) {
+		for (const i in this.flowCards[type]) {
 			this.flowCards[type][i].registered.forEach(value => {
 				result.add(value);
 			});
@@ -256,9 +254,10 @@ class IFTTTApp extends Homey.App {
 					flowID: args.event,
 					homeyCloudID: this.homeyId,
 					data: args.data || '',
+					token: Homey.ManagerSettings.get('athom-cloud-ifttt-token')
 				},
 				headers: {
-					Authorization: `Bearer ${Homey.ManagerSettings.get('ifttt_access_token')}`,
+					Authorization: `Bearer ${Homey.ManagerSettings.get('ifttt_access_token')}`, // ifttt
 				},
 			}, (error, response) => {
 				if (!error && response.statusCode === 200) {
@@ -266,7 +265,7 @@ class IFTTTApp extends Homey.App {
 					return resolve();
 				}
 				this.error('registerFlowActionTrigger() -> error could not trigger IFTTT realtime api:', error || response.statusCode !== 200);
-				return reject(new Error(`error could not trigger IFTTT realtime api: ${(error) ? error : response.statusCode}`));
+				return reject(new Error(`error could not trigger IFTTT realtime api: ${(error) || response.statusCode}`));
 			});
 		});
 	}
@@ -296,8 +295,8 @@ class IFTTTApp extends Homey.App {
 				},
 			}, (error, response, body) => {
 				if (error || response.statusCode !== 200) {
-					this.error(`refreshTokens() -> error fetching new tokens: ${(error) ? error : response.statusCode}`);
-					return reject(new Error(`error fetching new tokens: ${(error) ? error : response.statusCode}`));
+					this.error(`refreshTokens() -> error fetching new tokens: ${(error) || response.statusCode}`);
+					return reject(new Error(`error fetching new tokens: ${(error) || response.statusCode}`));
 				}
 				if (!error && body) {
 					let parsedResult;
