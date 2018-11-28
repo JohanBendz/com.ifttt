@@ -1,13 +1,16 @@
 {
   "name": "com.ifttt",
   "version": "1.0.0",
-  "description": "This app lets you connect your IFTTT recipes with Homey! To connect Homey with IFTTT perform the following steps:",
+  "description": "This app lets you connect your IFTTT Applets with Homey.",
   "main": "app.js",
   "dependencies": {
-    "homey-log": "^1.0.5",
-    "request": "^2.73.0"
+    "homey-log": "^1.0.6",
+    "request": "^2.88.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "eslint": "^5.9.0",
+    "eslint-config-athom": "^1.0.1"
+  },
   "scripts": {
     "run": "homeyConfig compose && athom project --run",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -15,6 +18,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/athombv/com.ifttt.git"
+  },
+  "engines": {
+    "node": ">=8.12.0"
   },
   "author": "",
   "license": "ISC",
