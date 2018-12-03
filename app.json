@@ -1,6 +1,6 @@
 {
   "id": "com.ifttt",
-  "version": "2.2.13",
+  "version": "2.3.0",
   "sdk": 2,
   "compatibility": ">=1.5.4",
   "category": "internet",
@@ -17,7 +17,7 @@
     "name": "Athom B.V."
   },
   "images": {
-    "small": "assets/images/small.jpg",
+    "small": "assets/images/small.png",
     "large": "assets/images/large.png"
   },
   "permissions": [
@@ -40,8 +40,8 @@
             "name": "var1",
             "type": "string",
             "title": {
-              "en": "Tag 1 (text)",
-              "nl": "Tag 1 (tekst)"
+              "en": "Tag 1",
+              "nl": "Tag 1"
             },
             "example": {
               "en": "Dryer is ready",
@@ -52,8 +52,8 @@
             "name": "var2",
             "type": "string",
             "title": {
-              "en": "Tag 2 (text)",
-              "nl": "Tag 2 (tekst)"
+              "en": "Tag 2",
+              "nl": "Tag 2"
             },
             "example": {
               "en": "Car is started",
@@ -62,12 +62,15 @@
           },
           {
             "name": "var3",
-            "type": "number",
+            "type": "string",
             "title": {
-              "en": "Tag 3 (number)",
-              "nl": "Tag 3 (numeriek)"
+              "en": "Tag 3",
+              "nl": "Tag 3"
             },
-            "example": 175.5
+            "example": {
+              "en": "John's birthday tomorrow",
+              "nl": "Jan is morgen jarig"
+            }
           }
         ],
         "args": [
