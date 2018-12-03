@@ -13,7 +13,7 @@ class IFTTTApp extends Homey.App {
     this.baseUrl = Homey.env.BASE_URL;
 
     // Clean up migration
-    // TODO: remove this sometime (>com.ifttt@3.0.0)
+    // TODO: remove this sometime (>com.ifttt@3.0.2)
     if (Homey.ManagerSettings.get('ifttt_access_token')) {
       Homey.ManagerSettings.unset('ifttt_access_token');
     }
