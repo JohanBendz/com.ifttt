@@ -8,7 +8,10 @@ module.exports = [
     method: 'GET',
     path: '/getTriggers',
     fn: (args, callback) => {
-      const registeredTriggers = Homey.app.flowCardManager.getRegisteredEvents({ ids: ['ifttt_event'], type: 'trigger' });
+      const registeredTriggers = Homey.app.flowCardManager.getRegisteredEvents({
+        ids: ['ifttt_event'],
+        type: 'trigger',
+      });
       Homey.app.log('api/getTriggers ->', registeredTriggers);
       return callback(null, registeredTriggers);
     },
@@ -40,7 +43,10 @@ module.exports = [
         Homey.app.log(`api/actions/triggerAFlow -> ${args.body.which_flow}`);
 
         // Check if trigger is registered on Homey upfront
-        if (!Homey.app.flowCardManager.getRegisteredEvents({ ids: ['ifttt_event'], type: 'trigger' }).includes(args.body.which_flow)) {
+        if (!Homey.app.flowCardManager.getRegisteredEvents({
+          ids: ['ifttt_event'],
+          type: 'trigger',
+        }).includes(args.body.which_flow)) {
           const notFoundError = new Error('No trigger registered on Homey for this which_flow value');
           notFoundError.code = 404;
           return callback(notFoundError);
@@ -48,13 +54,12 @@ module.exports = [
 
         // Trigger Flow
         try {
-          const isNumber = !isNaN(args.body.variable_3);
           await Homey.app.flowCardManager.triggerFlowCard({
             id: 'ifttt_event',
             tokens: {
               var1: args.body.variable_1 || '',
               var2: args.body.variable_2 || '',
-              var3: isNumber ? Number(args.body.variable_3) : null, // TODO: test what happens if null
+              var3: args.body.variable_3 || '',
             },
             state: {
               flow_id: args.body.which_flow,

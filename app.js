@@ -7,16 +7,14 @@ const Log = require('homey-log').Log;
 const IFTTTFlowCardManager = require('./lib/IFTTTFlowCardManager');
 
 // TODO: test
-// TODO: app.json
-// TODO: tag 3 example -> number when bug in smartphone app is fixed
-// TODO: think about migration of tag 3 from string to number
 class IFTTTApp extends Homey.App {
   async onInit() {
     this.log(`${Homey.manifest.id} running...`);
-    this.baseUrl = Homey.env.BASE_URL || 'https://ifttt.athomdev.com'; // TODO: remove/change
+    this.baseUrl = Homey.env.BASE_URL;
 
     // Clean up migration
-    if (Homey.ManagerSettings.get('ifttt_access_token')) { // TODO: remove this sometime
+    // TODO: remove this sometime (>com.ifttt@3.0.0)
+    if (Homey.ManagerSettings.get('ifttt_access_token')) {
       Homey.ManagerSettings.unset('ifttt_access_token');
     }
 
