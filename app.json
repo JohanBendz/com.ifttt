@@ -1,6 +1,6 @@
 {
   "id": "com.ifttt",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "sdk": 2,
   "compatibility": ">=1.5.4",
   "category": "internet",
@@ -110,8 +110,8 @@
       {
         "id": "trigger_ifttt_with_data",
         "title": {
-          "en": "Run Applet",
-          "nl": "Start Applet"
+          "en": "Run Applet with Data ingredient",
+          "nl": "Start Applet met Data ingredient"
         },
         "hint": {
           "en": "Fill in an event name, save the Flow, then create an IFTTT Applet with \"A Flow Has Been Started\" trigger, there you can select the provided event name.",

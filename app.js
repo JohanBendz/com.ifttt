@@ -5,15 +5,15 @@ const request = require('request');
 const Log = require('homey-log').Log;
 
 const IFTTTFlowCardManager = require('./lib/IFTTTFlowCardManager');
+const { NoAppletRegisteredForEvent } = require('./lib/Errors');
 
-// TODO: test
 class IFTTTApp extends Homey.App {
   async onInit() {
     this.log(`${Homey.manifest.id} running...`);
     this.baseUrl = Homey.env.BASE_URL;
 
     // Clean up migration
-    // TODO: remove this sometime (>com.ifttt@3.0.2)
+    // TODO: remove this sometime (>com.ifttt@3.0.3)
     if (Homey.ManagerSettings.get('ifttt_access_token')) {
       Homey.ManagerSettings.unset('ifttt_access_token');
     }
@@ -119,7 +119,11 @@ class IFTTTApp extends Homey.App {
         },
       });
     } catch (err) {
+      if (err.statusCode === 401) {
+        throw new NoAppletRegisteredForEvent();
+      }
       this.error(`registerFlowHasBeenStarted(event: ${args.event}) -> error`, err);
+      throw err;
     }
     this.log(`registerFlowHasBeenStarted(event: ${args.event}) -> success`);
   }
