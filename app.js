@@ -12,12 +12,6 @@ class IFTTTApp extends Homey.App {
     this.log(`${Homey.manifest.id} running...`);
     this.baseUrl = Homey.env.BASE_URL;
 
-    // Clean up migration
-    // TODO: remove this sometime (>com.ifttt@3.0.3)
-    if (Homey.ManagerSettings.get('ifttt_access_token')) {
-      Homey.ManagerSettings.unset('ifttt_access_token');
-    }
-
     // Fetch and store homey cloud id
     if (!this.homeyId) this.homeyId = await Homey.ManagerCloud.getHomeyId();
 
@@ -148,7 +142,9 @@ class IFTTTApp extends Homey.App {
         } else if (error) {
           err = new Error(error.message);
         }
-        err.statusCode = response.statusCode;
+        if (Object.prototype.hasOwnProperty.call(response, 'statusCode')) {
+          err.statusCode = response.statusCode;
+        }
         return reject(err);
       });
     });
