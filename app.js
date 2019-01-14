@@ -142,7 +142,7 @@ class IFTTTApp extends Homey.App {
         } else if (error) {
           err = new Error(error.message);
         }
-        if (Object.prototype.hasOwnProperty.call(response, 'statusCode')) {
+        if (response && Object.prototype.hasOwnProperty.call(response, 'statusCode')) {
           err.statusCode = response.statusCode;
         }
         return reject(err);
