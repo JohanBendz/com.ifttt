@@ -17,7 +17,7 @@ class IFTTTApp extends Homey.App {
       error: this.error.bind(this, '[IFTTTFlowCardManager]'),
     });
 
-    this.baseUrl = 'https://ifttt.athomdev.com';
+    this.baseUrl = Homey.env.BASE_URL;
 
     // Fetch and store homey cloud id
     if (!this.homeyId) this.homeyId = await Homey.ManagerCloud.getHomeyId();
