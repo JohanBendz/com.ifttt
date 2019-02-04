@@ -23,7 +23,6 @@ class IFTTTApp extends Homey.App {
     if (!this.homeyId) this.homeyId = await Homey.ManagerCloud.getHomeyId();
 
     // Send token reset to server, seems this app lost its token
-    await this.resetToken(); // TODO: remove this when not in alpha
     if (typeof this.token !== 'string') await this.resetToken();
 
     // Create IFTTTFlowCard instances
