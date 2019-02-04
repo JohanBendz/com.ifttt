@@ -23,6 +23,7 @@ class IFTTTApp extends Homey.App {
     if (!this.homeyId) this.homeyId = await Homey.ManagerCloud.getHomeyId();
 
     // Send token reset to server, seems this app lost its token
+    await this.resetToken(); // TODO: remove this when not in alpha
     if (typeof this.token !== 'string') await this.resetToken();
 
     // Create IFTTTFlowCard instances
@@ -113,11 +114,12 @@ class IFTTTApp extends Homey.App {
           token: this.token,
         },
       });
+      this.log(`registerFlowHasBeenStarted(event: ${args.event}) -> success`);
     } catch (err) {
+      this.error(`registerFlowHasBeenStarted(event: ${args.event}) -> error`, err);
       if (err.statusCode === 401) {
         throw new NoAppletRegisteredForEvent();
       }
-      this.error(`registerFlowHasBeenStarted(event: ${args.event}) -> error`, err);
       throw err;
     }
     this.log(`registerFlowHasBeenStarted(event: ${args.event}) -> success`);
