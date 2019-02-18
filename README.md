@@ -5,7 +5,7 @@ This app lets you connect your IFTTT Applets with Homey. Checkout [Homey on IFTT
 To connect your Applets with Homey first create Flow Actions and Triggers on Homey, these Flows will then become available for use in your Applets on IFTTT. Please note that some Applets are only available for owner accounts on Homey.
 
 #### Changelog
-3.0.7:
+3.0.10:
 - Fixes multiple possible crashes
 
 3.0.6:
