@@ -2,12 +2,28 @@
 
 const Homey = require('homey');
 
+/**
+ * Method that acts as a promisified timeout that can be awaited
+ * @param {number} ms - Time in milis to wait
+ * @returns {Promise<any>}
+ */
+async function timeout(ms) {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      return resolve();
+    }, ms);
+  });
+}
+
 module.exports = [
   {
     description: 'getTriggers',
     method: 'GET',
     path: '/getTriggers',
-    fn: (args, callback) => {
+    fn: async (args, callback) => {
+      // Hacky fix to prevent a crash when an api call comes in before flowCardManager is initialized in app.js
+      if (!Homey.app.flowCardManager) await timeout(500);
+
       const registeredTriggers = Homey.app.flowCardManager.getRegisteredEvents({
         ids: ['ifttt_event'],
         type: 'trigger',
@@ -20,7 +36,10 @@ module.exports = [
     description: 'getActions',
     method: 'GET',
     path: '/getActions',
-    fn: (args, callback) => {
+    fn: async (args, callback) => {
+      // Hacky fix to prevent a crash when an api call comes in before flowCardManager is initialized in app.js
+      if (!Homey.app.flowCardManager) await timeout(500);
+
       const registeredActions = Homey.app.flowCardManager.getRegisteredEvents({
         ids: ['trigger_ifttt', 'trigger_ifttt_with_data'],
         type: 'action',
@@ -36,6 +55,9 @@ module.exports = [
     path: '/actions/triggerAFlow',
     fn: async (args = {}, callback) => {
       Homey.app.log('api/actions/triggerAFlow');
+
+      // Hacky fix to prevent a crash when an api call comes in before flowCardManager is initialized in app.js
+      if (!Homey.app.flowCardManager) await timeout(500);
 
       // Check for valid input parameters
       if (Object.prototype.hasOwnProperty.call(args, 'body')

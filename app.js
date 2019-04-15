@@ -10,6 +10,13 @@ const { NoAppletRegisteredForEvent } = require('./lib/Errors');
 class IFTTTApp extends Homey.App {
   async onInit() {
     this.log(`${Homey.manifest.id} running...`);
+
+    // Create IFTTTFlowCardManager instance. important to do this first else api.js has no flowCardManager
+    this.flowCardManager = new IFTTTFlowCardManager({
+      log: this.log.bind(this, '[IFTTTFlowCardManager]'),
+      error: this.error.bind(this, '[IFTTTFlowCardManager]'),
+    });
+
     this.baseUrl = Homey.env.BASE_URL;
 
     // Fetch and store homey cloud id
@@ -17,12 +24,6 @@ class IFTTTApp extends Homey.App {
 
     // Send token reset to server, seems this app lost its token
     if (typeof this.token !== 'string') await this.resetToken();
-
-    // Create IFTTTFlowCardManager instance
-    this.flowCardManager = new IFTTTFlowCardManager({
-      log: this.log.bind(this, '[IFTTTFlowCardManager]'),
-      error: this.error.bind(this, '[IFTTTFlowCardManager]'),
-    });
 
     // Create IFTTTFlowCard instances
     await this.createIFTTTFlowCards();
@@ -112,11 +113,12 @@ class IFTTTApp extends Homey.App {
           token: this.token,
         },
       });
+      this.log(`registerFlowHasBeenStarted(event: ${args.event}) -> success`);
     } catch (err) {
+      this.error(`registerFlowHasBeenStarted(event: ${args.event}) -> error`, err);
       if (err.statusCode === 401) {
         throw new NoAppletRegisteredForEvent();
       }
-      this.error(`registerFlowHasBeenStarted(event: ${args.event}) -> error`, err);
       throw err;
     }
     this.log(`registerFlowHasBeenStarted(event: ${args.event}) -> success`);
@@ -142,7 +144,7 @@ class IFTTTApp extends Homey.App {
         } else if (error) {
           err = new Error(error.message);
         }
-        if (Object.prototype.hasOwnProperty.call(response, 'statusCode')) {
+        if (response && Object.prototype.hasOwnProperty.call(response, 'statusCode')) {
           err.statusCode = response.statusCode;
         }
         return reject(err);
