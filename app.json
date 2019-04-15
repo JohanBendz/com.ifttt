@@ -7,11 +7,13 @@
   "brandColor": "#0099FB",
   "name": {
     "en": "IFTTT",
-    "nl": "IFTTT"
+    "nl": "IFTTT",
+	"de": "IFTTT"
   },
   "description": {
     "en": "Connect your Homey to IFTTT",
-    "nl": "Verbind je Homey met IFTTT"
+    "nl": "Verbind je Homey met IFTTT",
+	"de": "Verbinde dein Homey mit IFTTT"
   },
   "author": {
     "name": "Athom B.V."
@@ -29,11 +31,13 @@
         "id": "ifttt_event",
         "title": {
           "en": "Applet starts a Flow with Tags",
-          "nl": "Applet start een Flow met Tags"
+          "nl": "Applet start een Flow met Tags",
+		  "de": "Applet startet einen Flow mit Tags"
         },
         "hint": {
           "en": "Fill in an event name, save the Flow then create an Applet on IFTTT with a \"Start a Flow with Tags\" action, there you can select the provided event name.",
-          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een Applet aan op IFTTT met een \"Start a Flow with Tags\" actie, selecteer bij het aanmaken van de Applet de juiste event naam."
+          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een Applet aan op IFTTT met een \"Start a Flow with Tags\" actie, selecteer bij het aanmaken van de Applet de juiste event naam.",
+		  "de": "Gib einen Ereignisname ein, speichere den Flow und erstelle dann ein Applet in IFTTT mit einer \"Einen Flow mit Tags starten\"-Aktion. Dort kannst du den bereitgestellten Ereignisname auswählen."
         },
         "tokens": [
           {
@@ -41,11 +45,13 @@
             "type": "string",
             "title": {
               "en": "Tag 1",
-              "nl": "Tag 1"
+              "nl": "Tag 1",
+			  "de": "Tag 1"
             },
             "example": {
               "en": "Washing machine is ready",
-              "nl": "Wasmachine is klaar"
+              "nl": "Wasmachine is klaar",
+			  "de": "Waschmaschine ist fertig"
             }
           },
           {
@@ -53,11 +59,13 @@
             "type": "string",
             "title": {
               "en": "Tag 2",
-              "nl": "Tag 2"
+              "nl": "Tag 2",
+			  "de": "Tag 2"
             },
             "example": {
               "en": "Car is started",
-              "nl": "Auto is gestart"
+              "nl": "Auto is gestart",
+			  "de": "Auto ist gestartet"
             }
           },
           {
@@ -65,11 +73,13 @@
             "type": "string",
             "title": {
               "en": "Tag 3",
-              "nl": "Tag 3"
+              "nl": "Tag 3",
+			  "de": "Tag 3"
             },
             "example": {
               "en": "John's birthday tomorrow",
-              "nl": "Jan is morgen jarig"
+              "nl": "Jan is morgen jarig",
+			  "de": "Morgen ist Jans Geburtstag"
             }
           }
         ],
@@ -79,7 +89,8 @@
             "type": "text",
             "placeholder": {
               "en": "Event name",
-              "nl": "Event naam"
+              "nl": "Event naam",
+			  "de": "Ereignisname"
             }
           }
         ]
@@ -90,11 +101,13 @@
         "id": "trigger_ifttt",
         "title": {
           "en": "Run Applet",
-          "nl": "Start Applet"
+          "nl": "Start Applet",
+		  "de": "Applet ausführen"
         },
         "hint": {
           "en": "Fill in an event name, save the Flow, then create an IFTTT Applet with \"A Flow Has Been Started\" trigger, there you can select the provided event name.",
-          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een IFTTT Applet aan met een \"A Flow Has Been Started\" trigger, selecteer bij het aanmaken van de Applet de juiste event naam."
+          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een IFTTT Applet aan met een \"A Flow Has Been Started\" trigger, selecteer bij het aanmaken van de Applet de juiste event naam.",
+		  "de": "Gib einen Ereignisname ein, speichere den Flow und erstelle dann ein Applet in IFTTT mit einer \"Einen Flow mit Tags starten\"-Aktion. Dort kannst du den bereitgestellten Ereignisname auswählen."
         },
         "args": [
           {
@@ -102,7 +115,8 @@
             "type": "text",
             "placeholder": {
               "en": "Event name",
-              "nl": "Event naam"
+              "nl": "Event naam",
+			  "de": "Ereignisname"
             }
           }
         ]
@@ -111,11 +125,13 @@
         "id": "trigger_ifttt_with_data",
         "title": {
           "en": "Run Applet with Data ingredient",
-          "nl": "Start Applet met Data ingredient"
+          "nl": "Start Applet met Data ingredient",
+		  "de": "Applet mit Datenzugabe ausführen"
         },
         "hint": {
           "en": "Fill in an event name, save the Flow, then create an IFTTT Applet with \"A Flow Has Been Started\" trigger, there you can select the provided event name.",
-          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een IFTTT Applet aan met een \"A Flow Has Been Started\" trigger, selecteer bij het aanmaken van de Applet de juiste event naam."
+          "nl": "Vul een event naam in en sla de Flow op. Maak vervolgens een IFTTT Applet aan met een \"A Flow Has Been Started\" trigger, selecteer bij het aanmaken van de Applet de juiste event naam.",
+		  "de": "Gib einen Ereignisname ein, speichere den Flow und erstelle dann ein Applet in IFTTT mit einer \"Einen Flow mit Tags starten\"-Aktion. Dort kannst du den bereitgestellten Ereignisname auswählen."
         },
         "args": [
           {
@@ -123,7 +139,8 @@
             "type": "text",
             "placeholder": {
               "en": "Event name",
-              "nl": "Event naam"
+              "nl": "Event naam",
+			  "de": "Ereignisname"
             }
           },
           {
@@ -131,7 +148,8 @@
             "type": "text",
             "placeholder": {
               "en": "Data",
-              "nl": "Data"
+              "nl": "Data",
+			  "de": "Daten"
             }
           }
         ]

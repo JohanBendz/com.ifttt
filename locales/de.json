@@ -1,0 +1,17 @@
+{
+	"settings":{
+		"title": "IFTTT-Einstellungen",
+		"intro": "Damit sich Homey mit IFTTT verbinden kann, autorisiere Homey bitte, grundlegende Informationen über Flow-Aktionen und Trigger an IFTTT zu senden.",
+		"authorize": "Mit IFTTT verbinden",
+		"revoke": "IFTTT trennen",
+		"authorize_error": "Etwas ist schiefgelaufen, bitte versuche es erneut.",
+		"not_owner": "Es scheint, dass dieser Benutzer nicht der Besitzer von Homey ist; nur der Besitzer kann eine Verbindung zu IFTTT herstellen.",
+		"step1": "Klicke auf die untenstehende Verbinden-Schaltfläche und melde dich bei deinem Athom-Konto an.",
+		"step1_alt": "Klicke auf die untenstehende Trennen-Schaltfläche, um Homey von IFTTT zu trennen; um den IFTTT-Zugriff komplett zu entziehen, trenne Homey auch <a href=\"https://ifttt.com/services/homey/settings\" target=\"_blank\">hier</a>.",
+		"step2": "Um zu beginnen, folge den untenstehenden Schritten: </br></br>1. Erstelle im Flow-Editor Flow-Aktionen und -Trigger mithilfe der IFTTT-Flow-Karten.",
+		"step3": "2. Erstelle Applets in <a href=\"https://ifttt.com/my_applets\" target=\"_blank\">IFTTT</a>, wo du die vorher erstellten Flow-Aktionen und -Trigger wählen kannst (es kann ein paar Minuten dauern, bis deine Flows in IFTTT sichtbar werden)."
+	},
+	"general": {
+		"major_update_notification": "Das IFTTT-App-Update beschädigt die vorher installierte Version der IFTTT-App. Bitte überprüfe Einstellungen > IFTTT."
+	}
+}
