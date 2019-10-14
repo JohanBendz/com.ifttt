@@ -7,6 +7,7 @@ To connect your Applets with Homey first create Flow Actions and Triggers on Hom
 #### Changelog
 3.0.13:
 - Updates images and brand color
+
 3.0.10:
 - Fixes multiple possible crashes
 
