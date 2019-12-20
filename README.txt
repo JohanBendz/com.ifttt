@@ -1,0 +1,1 @@
+IFTTT is a connectivity platform powering the digital transformation of products into integrated services. One connection enables you to integrate with any service with the tap of a button. Connect and let Homey speak when your oven has finished preheating, or get an email when Homey publishes a new trigger or action.

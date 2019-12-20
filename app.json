@@ -1,6 +1,6 @@
 {
   "id": "com.ifttt",
-  "version": "3.0.14",
+  "version": "3.0.15",
   "sdk": 2,
   "compatibility": ">=1.5.4",
   "category": "internet",
@@ -11,9 +11,9 @@
     "de": "IFTTT"
   },
   "description": {
-    "en": "Connect your Homey to IFTTT",
-    "nl": "Verbind je Homey met IFTTT",
-    "de": "Verbinde dein Homey mit IFTTT"
+    "en": "If this, then that",
+    "nl": "If this, then that",
+    "de": "If this, then that"
   },
   "author": {
     "name": "Athom B.V."
